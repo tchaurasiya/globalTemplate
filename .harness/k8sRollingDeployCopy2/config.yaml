@@ -2,6 +2,4 @@ stable: 1.0.0
 versions:
   prod1: 1.0.0
   prod0: 1.0.0
-allowed-accounts:
-  - kmpySmUISimoRrJL6NL73w
 icon-name: kubernetes
