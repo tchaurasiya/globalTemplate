@@ -1,5 +1,5 @@
 stable: 1.0.0
-version:
+versions:
   prod1: 1.0.0
   prod0: 1.0.0
 allowed-accounts:
