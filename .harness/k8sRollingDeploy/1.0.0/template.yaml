@@ -19,7 +19,7 @@ template:
     manifests:
       type: array
       label: Manifest Path
-      default:  ${{runtime.manifestPath}}-somethingrandom
+      default:  ${{runtime.manifestPath}}-somethingrandom-somethingrandom
       required: true
       ui:
         component: array
