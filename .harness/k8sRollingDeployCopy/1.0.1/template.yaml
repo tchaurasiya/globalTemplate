@@ -19,7 +19,7 @@ template:
     manifests:
       type: array
       label: Manifest Path
-      default:  something random again
+      default:  something random again again agiin 
       required: true
       ui:
         component: array
