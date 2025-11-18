@@ -3,3 +3,4 @@ pipeline:
     - steps:
         - run:
             script: go build
+      runtime: shell
