@@ -4,31 +4,33 @@ template:
       type: string
       label: Kubeconfig Path
       default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
-      required: true
       ui:
         tooltip: Enter the path to the 'kubeconfig' file.
-        placeholder: path/kubeconfig
     namespace:
       type: string
       label: Namespace
-      required: true
-      default: default
+      default: ${{infra.namespace}}
       ui:
         tooltip: Enter the Kubernetes namespace for deployment.
-        placeholder: namespace
     release:
       type: string
       label: Release
-      required: true
+      default: ${{infra.release}}
       ui:
-        tooltip: Enter the name for the current Helm release.
+        tooltip: Enter the Helm release name.
+    chart:
+      type: string
+      label: Chart Path
+      default: ${{runtime.manifestPath}}
+      ui:
+        tooltip: Enter the directory path or .tgz file path to the Helm chart.
     ignore_failed_release:
       type: boolean
       label: Ignore Failed Release
       default: false
       ui:
+        tooltip: If the latest existing Helm release is in a failed state, Harness does not proceed with the deployment and throws an error.\nEnable this option to have Harness ignore it and proceed with the deployment.
         component: boolean-card-select
-        tooltip: Enable this option to ignore failed releases and proceed with deployment.
     skip_deploy_steady_check:
       type: boolean
       label: Skip Deploy Steady Check
@@ -41,23 +43,23 @@ template:
       label: Upgrade with Install
       default: false
       ui:
+        tooltip: Select this option to always use "helm upgrade --install" instead of "helm install" for first release, followed by "helm upgrade" for subsequent releases.
         component: boolean-card-select
-        tooltip: Select this option to use "helm upgrade --install" instead of "helm install", allowing upgrades if the release already exists (only applicable when CLI is used).
     deploy_test:
       type: boolean
       label: Run Tests
       default: false
       ui:
+        tooltip: Enable this option to run Helm chart tests after deployment.
         component: boolean-card-select
-        tooltip: Run Helm chart tests after rollback command.
     deploy_test_logs:
       type: boolean
       label: Test Logs
       default: false
       ui:
+        tooltip: Enable this option to print logs from Helm chart test pods.
+        visible: ${{deploy_test == true}}
         component: boolean-card-select
-        tooltip: Enable this option to print out logs from test pods.
-        visible: ${{runtests == true}}
     deploy_flags:
       type: array
       label: Command Flags
@@ -91,72 +93,57 @@ template:
           - inputType: textarea
             relativePath: flag
             label: Flag
+    deploy_test_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
     deploy_env_vars:
       type: list
       label: Environment Variables
       ui:
-        layout: grid
-        inputs:
-          - inputType: text
-            label: Key
-            relativePath: key
-          - inputType: text
-            label: Value
-            relativePath: value
-    instanceunittype:
-      type: string
-      label: Instance count
-      required: true
-      default: count
-      options:
-        - count
-        - percentage
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the deploy step.
+    deploy_test_env_vars:
+      type: list
+      label: Environment Variables
       ui:
-        visible: false
-        component: select
-        tooltip: Select the instance unit type.
-    instances:
-      type: number
-      label: Instances
-      required: true
-      default: 1
-      ui:
-        visible: false
-        tooltip: Enter the volume of instances to create canary with.
-    chart:
-      type: string
-      label: Chart Path
-      required: true
-      ui:
-        tooltip: Directory path or .tgz file path.
-        placeholder: path/helm/chart/dir
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the test step during deployment.
     subchart:
       type: string
       label: Subchart Path
       ui:
-        visible: ${{manifests != null}}
-        tooltip: Enter the path within Helm Chart to the subchart.
+        visible: ${{chart != ""}}
+        tooltip: Enter the path to the subchart within the Helm chart.
     values:
       type: array
       label: Values File Paths
+      default: ${{manifest.overrides}}
       ui:
-        visible: ${{manifests != null}}
+        visible: ${{chart != ""}}
         component: array
-        input: 
+        input:
           inputType: text
-        tooltip: List of values file paths.
-        placeholder: path/values.yaml,path2/value.yaml,path3/vals.yaml
-    skip_deploy_steady_check_for_jobs:
-      type: boolean
-      label: Skip Deploy Steady Check for Jobs
-      default: false
-      ui:
-        component: boolean-card-select
-        tooltip: Skip the steady state check for jobs after rollback command.
+        tooltip: Enter the list of values YAML file paths.
     deploy_log_level:
       type: string
       label: Log Level
-      default: error
+      default: info
       options:
         - info
         - warn
@@ -165,25 +152,27 @@ template:
         - trace
       ui:
         component: select
-        tooltip: Select the log level for this step.
-    skip_default_values_yaml:
-      type: boolean
-      label: Skip Default Values YAML
-      default: false
+        tooltip: Select the log level for the deploy step.
+    deploy_test_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
       ui:
-        component: boolean-card-select
-    enforce_infra_namespace:
-      type: boolean
-      label: Enforce Namespace
-      default: false
-      ui:
-        component: boolean-card-select
+        component: select
+        tooltip: Select the log level for the test step during deployment.
     server_render:
       type: boolean
       label: Server Rendering
       default: false
       ui:
-        tooltip: Enable this option to use Kubernetes cluster server to render manifests instead of locally.
+        tooltip: Enable this option to use server-side rendering instead of local client-side rendering for the Helm chart.
+        component: boolean-card-select
   layout:
     - title: Optional Configuration
       items:
@@ -193,23 +182,21 @@ template:
         - chart
         - subchart
         - values
-        - instanceunittype
-        - instances
         - deploy_log_level
+        - deploy_test_log_level
         - deploy_flags
+        - deploy_test_flags
         - deploy_env_vars
+        - deploy_test_env_vars
         - ignore_failed_release
         - skip_deploy_steady_check
         - upgrade_with_install
         - deploy_test
         - deploy_test_logs
-        - skip_deploy_steady_check_for_jobs
-        - skip_default_values_yaml
-        - enforce_infra_namespace
         - server_render
-  id: HelmDeployBlueGreenStep
-  name: Helm Deploy Blue Green
-  description: Deploys Helm chart using blue-green strategy.
+  id: HelmDeployBasicStep
+  name: Helm Deploy Basic
+  description: Deploys a Helm chart using a basic strategy.
   version: 1
   author: harness
   module:
@@ -218,14 +205,14 @@ template:
   step:
     group:
       steps:
-        - name: Helm Deploy Blue Green
-          id: HelmDeployBlueGreenStep
+        - name: Helm Deploy Basic
+          id: HelmDeployBasicStep
           run:
             container:
-              image: harnessdev/helm-deploy:linux-arm64-0.0.5
+              image: harnessdev/helm-deploy:linux-amd64-0.0.5
               connector: account.harnessImage
             env:
-              PLUGIN_STRATEGY: blue-green
+              PLUGIN_STRATEGY: basic
               PLUGIN_RELEASE_NAME: ${{inputs.release}} 
               PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
               PLUGIN_MANIFEST_PATH: ${{inputs.chart}}
@@ -234,16 +221,15 @@ template:
               PLUGIN_NAMESPACE: ${{inputs.namespace}}
               PLUGIN_IGNORE_HISTORY_FAILURE: ${{inputs.ignore_failed_release}}
               PLUGIN_SKIP_STEADY_STATE_CHECK: ${{inputs.skip_deploy_steady_check}}
-              PLUGIN_STEADY_STATE_CHECK_FOR_JOBS: ${{inputs.skip_deploy_steady_check_for_jobs}}
-              PLUGIN_FF_CDP_SKIP_DEFAULT_VALUES_YAML_NG: ${{inputs.skip_default_values_yaml}}
+              PLUGIN_STEADY_STATE_CHECK_FOR_JOBS: ${{runtime.setting.native_helm_enable_steady_state_for_jobs}}
+              PLUGIN_FF_CDP_SKIP_DEFAULT_VALUES_YAML_NG: ${{runtime.ff.CDP_SKIP_DEFAULT_VALUES_YAML_NG}}
               PLUGIN_COMMAND_FLAGS: ${{json.format(${{inputs.deploy_flags}})}}
-              PLUGIN_ENFORCE_INFRA_NAMESPACE: ${{inputs.enforce_infra_namespace}}
-              PLUGIN_INSTANCES: ${{inputs.instances}}
-              PLUGIN_INSTANCES_UNIT_TYPE: ${{inputs.instanceunittype}}
+              PLUGIN_ENFORCE_INFRA_NAMESPACE: ${{runtime.setting.enable_namespace_override_validation_infrastructure_level_namespace}}
               PLUGIN_SERVER_RENDERING: ${{inputs.server_render}}
               PLUGIN_LOG_LEVEL: ${{inputs.deploy_log_level}}
+              PLUGIN_ENV_VARS: ${{inputs.deploy_env_vars}}
         - if: ${{inputs.deploy_test == true}}
-          name: Helm Test Step
+          name: Helm Test
           id: HelmTestStep
           run:
             container:
@@ -253,7 +239,8 @@ template:
               PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
               PLUGIN_NAMESPACE: ${{inputs.namespace}}
               PLUGIN_RELEASE_NAME: ${{inputs.release}} 
-              PLUGIN_COMMAND_FLAGS: ${{json.format(${{inputs.deploy_flags}})}}
+              PLUGIN_COMMAND_FLAGS: ${{json.format(${{inputs.deploy_test_flags}})}}
               PLUGIN_PRINT_LOGS: ${{inputs.deploy_test_logs}}
-              PLUGIN_ENFORCE_INFRA_NAMESPACE: ${{inputs.enforce_infra_namespace}}
-              PLUGIN_LOG_LEVEL: ${{inputs.deploy_log_level}}
+              PLUGIN_ENFORCE_INFRA_NAMESPACE: ${{runtime.setting.enable_namespace_override_validation_infrastructure_level_namespace}}
+              PLUGIN_LOG_LEVEL: ${{inputs.deploy_test_log_level}}
+              PLUGIN_ENV_VARS: ${{inputs.deploy_test_env_vars}}
