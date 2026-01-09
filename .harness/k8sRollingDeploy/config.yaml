@@ -5,3 +5,8 @@ versions:
 allowed-accounts:
   - kmpySmUISimoRrJL6NL73w
 icon-name: kubernetes
+metadata:
+  module:
+    - cd
+  strategy:
+    - k8s
