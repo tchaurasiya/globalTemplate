@@ -20,7 +20,7 @@ template:
         tooltip: Specify the AWS regions for deployment
     build_cmd_log_level:
       type: string
-      label: Log Level
+      label: Log  Levels
       default: error
       options:
         - info
