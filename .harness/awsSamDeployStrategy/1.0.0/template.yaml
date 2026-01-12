@@ -138,26 +138,10 @@ template:
         component: string
         tooltip: Enter the AWS CloudFormation stack name
         placeholder: Enter stack name
-    build_step: 
-      type: string
-      label: AWS SAM Build Step
-      default: awsSamBuildStep
-      required: true
-      ui:
-        tooltip: "Enter the step template for the AWS SAM Build step (format: stepTemplateName:version; stable version will be used if version is not specified)"
-    deploy_step: 
-      type: string
-      label: AWS SAM Deploy Step
-      default: awsSamDeployStep
-      required: true
-      ui:
-        tooltip: "Enter the step template for the AWS SAM Deploy step (format: stepTemplateName:version; stable version will be used if version is not specified)"
   layout:
     - connector
     - region
     - stack
-    - build_step
-    - deploy_step
     - title: Optional Configuration
       items:
         - path
@@ -196,7 +180,7 @@ template:
         - name: Build
           id: buildstep
           template:
-            uses: ${{inputs.build_step}}
+            uses: awsSamBuildStep
             with:
               connector: ${{inputs.connector}}
               log_level: ${{inputs.package_log_level}}
@@ -213,7 +197,7 @@ template:
         - name: Deploy
           id: deploystep
           template:
-            uses: ${{inputs.deploy_step}}
+            uses: awsSamDeployStep
             with:
               connector: ${{inputs.connector}}
               log_level: ${{inputs.package_log_level}}

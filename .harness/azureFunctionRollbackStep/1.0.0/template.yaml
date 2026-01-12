@@ -54,5 +54,5 @@ template:
               PLUGIN_CONTAINER_NAME: ${{rollback.image}} 
               PLUGIN_ACR_REGISTRY: ${{rollback.acr_name}}
               PLUGIN_ARTIFACT_PATH: ${{${{runtime.fqn}}.DownloadArtifact.output.outputVariables.PLUGIN_ARTIFACT_DOWNLOAD_PATH}}
-              PLUGIN_HARNESS_CONNECTORx: ${{rollback.infra}}
+              PLUGIN_HARNESS_CONNECTOR: ${{rollback.infra}}
               PLUGIN_ENV_VARS: ${{rollback.env_vars}}

@@ -81,13 +81,6 @@ template:
       ui:
         component: select
         tooltip: Set the log level for the package step.
-    package_step:
-      type: string
-      label: Serverless Package Step
-      default: serverlessPackageStep
-      required: true
-      ui:
-        tooltip: "Enter the step for the serverless package step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
     deploy_cmd_timeout:
       type: string
       label: Deploy command timeout
@@ -116,13 +109,6 @@ template:
       ui:
         component: select
         tooltip: Set the log level for the deploy step.
-    deploy_step:
-      type: string
-      label: Serverless Deploy Step
-      default: serverlessDeployStep
-      required: true
-      ui:
-        tooltip: "Enter the step for the serverless deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
     rollback_log_level:
       type: string
       label: Rollback command log Level
@@ -136,13 +122,6 @@ template:
       ui:
         component: select
         tooltip: Set the log level for the rollback step.
-    rollback_step:
-      type: string
-      label: Serverless Rollback Step
-      default: serverlessRollbackStep
-      required: true
-      ui:
-        tooltip: "Enter the step for the serverless rollback step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
   layout: 
     - connector
     - region
@@ -160,19 +139,16 @@ template:
                 - package_cmd_timeout
                 - package_cmd_opts
                 - package_log_level
-                - package_step
             - title: Deploy command
               items:
                 - deploy_cmd_timeout
                 - deploy_cmd_opts
                 - stack
                 - deploy_log_level
-                - deploy_step
             - client_path
         - title: Rollback
           items:
             - rollback_log_level
-            - rollback_step
   id: serverlessDeployWithRollbackStrategy
   name: Serverless Deployment With Rollback Strategy
   description: Harness managed Serverless framework deployment with rollback.
@@ -187,7 +163,7 @@ template:
         - name: Package
           id: packagestep
           template:
-            uses: ${{inputs.package_step}}
+            uses: serverlessPackageStep
             with:
               connector: ${{inputs.connector}}
               path: ${{inputs.path}}
@@ -201,7 +177,7 @@ template:
         - name: Deploy
           id: deploystep
           template:
-            uses: ${{inputs.deploy_step}}
+            uses: serverlessDeployStep
             with:
               connector: ${{inputs.connector}}
               path: ${{inputs.path}}
@@ -217,7 +193,7 @@ template:
         - name: Rollback
           id: rollbackstep
           template:
-            uses: ${{inputs.rollbackstep}}
+            uses: serverlessRollbackStep
             with:
               connector: ${{inputs.connector}}
               region: ${{inputs.region}}
