@@ -251,7 +251,7 @@ template:
   module:
     - cd
   alias: deploy
-  stages:
+  stage:
     - steps:
         - name: Kubernetes Rolling Deploy Step
           id: k8sRollingDeployStep

@@ -145,14 +145,14 @@ template:
       default: awsSamBuildStep
       required: true
       ui:
-        tooltip: Enter the step for the AWS SAM Build step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+        tooltip: "Enter the step for the AWS SAM Build step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
     deploy_step: 
       type: string
       label: AWS SAM Deploy Step
       default: awsSamDeployStep
       required: true
       ui:
-        tooltip: Enter the step for the AWS SAM Deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+        tooltip: "Enter the step for the AWS SAM Deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
   layout:
     - connector
     - region

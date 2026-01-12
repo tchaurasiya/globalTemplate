@@ -207,6 +207,5 @@ template:
               PLUGIN_PRE_EXECUTE_COMMAND: ${{inputs.pre_cmd}}
               PLUGIN_ARTIFACT_PATH: ${{${{runtime.fqn}}.DownloadArtifact.output.outputVariables.PLUGIN_ARTIFACT_DOWNLOAD_PATH}}
               PLUGIN_HARNESS_CONNECTOR: ${{inputs.infra}}
-              PLUGIN_HARNESS_CONNECTOR: ${{inputs.artifact}}
               PLUGIN_DEPLOY_CMD_OPTION: ${{inputs.deploy_cmd}}
               PLUGIN_ENV_VARS: ${{inputs.env_vars}}

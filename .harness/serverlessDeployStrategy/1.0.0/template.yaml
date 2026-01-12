@@ -87,7 +87,7 @@ template:
       default: serverlessPackageStep
       required: true
       ui:
-        tooltip: Enter the step for the serverless package step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+        tooltip: "Enter the step for the serverless package step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
     deploy_cmd_timeout:
       type: string
       label: Deploy command timeout
@@ -122,7 +122,7 @@ template:
       default: serverlessDeployStep
       required: true
       ui:
-        tooltip: Enter the step for the serverless deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+        tooltip: "Enter the step for the serverless deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
     rollback_log_level:
       type: string
       label: Rollback command log Level
@@ -142,7 +142,7 @@ template:
       default: serverlessRollbackStep
       required: true
       ui:
-        tooltip: Enter the step for the serverless rollback step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+        tooltip: "Enter the step for the serverless rollback step. If version is not specified, stable version will be used. Format is stepTemplateName:version."
   layout: 
     - connector
     - region
