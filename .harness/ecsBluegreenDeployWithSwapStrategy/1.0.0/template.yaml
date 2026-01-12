@@ -362,7 +362,7 @@ template:
             uses: ecsBluegreenRollbackStep@1.0.0
             with:
               connector: ${{inputs.connector}}
-              log_level: ${{ inputs.rollback_log_level }}
+              log_level: ${{inputs.rollback_log_level}}
               cluster: ${{inputs.cluster}}
               region: ${{inputs.region}}
               blue_service: ${{rollback.data.SERVICE_NAME}}
@@ -377,7 +377,6 @@ template:
               green_service_json: ${{rollback.data.GREEN_SERVICE_JSON}}
               green_service_scalable_targets_json: ${{rollback.data.GREEN_SERVICE_SCALABLE_TARGETS_JSON}}
               green_service_scaling_policies_json: ${{rollback.data.GREEN_SERVICE_SCALING_POLICIES_JSON}}
-              green_service_existed: ${{rollback.data.GREEN_SERVICE_EXIST}}
               rollback_green_service: ${{rollback.data.GREEN_SERVICE_ROLLBACK_DATA_EXIST}}
               skip_steady_state: ${{inputs.rollback_skip_steady_state}}
               steady_state_timeout: ${{inputs.rollback_steady_state_timeout}}
