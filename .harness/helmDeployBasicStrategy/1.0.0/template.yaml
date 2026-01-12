@@ -1,0 +1,369 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment.
+    release:
+      type: string
+      label: Release
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Helm release.
+    chart:
+      type: string
+      label: Chart Path
+      default: ${{runtime.manifestPath}}
+      ui:
+        tooltip: Enter the directory path or .tgz file path to the Helm chart.
+    ignore_failed_release:
+      type: boolean
+      label: Ignore Failed Release
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to ignore failed releases and proceed with deployment.
+    skip_deploy_steady_check:
+      type: boolean
+      label: Skip Deploy Steady Check
+      default: false
+      ui:
+        tooltip: Enable this option to skip the steady state check after deployment.
+        component: boolean-card-select
+    skip_rollback_steady_check:
+      type: boolean
+      label: Skip Rollback Steady Check
+      default: false
+      ui:
+        tooltip: Enable this option to skip the steady state check after rollback.
+        component: boolean-card-select
+    upgrade_with_install:
+      type: boolean
+      label: Upgrade with Install
+      default: false
+      ui:
+        tooltip: Select this option to always use "helm upgrade --install" instead of "helm install" for first release, followed by "helm upgrade" for subsequent releases.
+        component: boolean-card-select
+    deploy_test:
+      type: boolean
+      label: Run Tests
+      default: false
+      ui:
+        tooltip: Enable this option to run Helm chart tests after deployment.
+        component: boolean-card-select
+    rollback_test:
+      type: boolean
+      label: Run Tests
+      default: false
+      ui:
+        tooltip: Enable this option to run Helm chart tests after rollback.
+        component: boolean-card-select
+    deploy_test_logs:
+      type: boolean
+      label: Test Logs
+      default: false
+      ui:
+        tooltip: Enable this option to print logs from Helm chart test pods.
+        visible: ${{deploy_test == true}}
+        component: boolean-card-select
+    rollback_test_logs:
+      type: boolean
+      label: Test Logs
+      default: false
+      ui:
+        tooltip: Enable this option to print logs from Helm chart test pods.
+        visible: ${{rollback_test == true}}
+        component: boolean-card-select
+    deploy_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: get manifest
+                  value: get_manifest
+                - label: list
+                  value: list
+                - label: history
+                  value: history
+                - label: install
+                  value: install
+                - label: upgrade
+                  value: upgrade
+                - label: rollback
+                  value: rollback
+                - label: uninstall
+                  value: uninstall
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+    deploy_test_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+    rollback_test_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+    rollback_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: get manifest
+                  value: get_manifest
+                - label: list
+                  value: list
+                - label: history
+                  value: history
+                - label: install
+                  value: install
+                - label: upgrade
+                  value: upgrade
+                - label: rollback
+                  value: rollback
+                - label: uninstall
+                  value: uninstall
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+    deploy_env_vars:
+      type: list
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the deploy step.
+    deploy_test_env_vars:
+      type: list
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the test step during deployment.
+    rollback_test_env_vars:
+      type: list
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the test step during rollback.
+    rollback_env_vars:
+      type: list
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the rollback step.
+    subchart:
+      type: string
+      label: Subchart Path
+      ui:
+        visible: ${{chart != ""}}
+        tooltip: Enter the path to the subchart within the Helm chart.
+    values:
+      type: array
+      label: Values File Paths
+      default: ${{manifest.overrides}}
+      ui:
+        visible: ${{chart != ""}}
+        component: array
+        input:
+          inputType: text
+        tooltip: Enter the list of values YAML file paths.
+    deploy_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the deploy step.
+    deploy_test_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the test step during deployment.
+    rollback_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the rollback step.
+    rollback_test_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the test step during rollback.
+    server_render:
+      type: boolean
+      label: Server Rendering
+      default: false
+      ui:
+        tooltip: Enable this option to use server-side rendering instead of local client-side rendering for the Helm chart.
+        component: boolean-card-select
+  layout:
+  - title: Optional Configuration
+    items:
+      - kubeconfig
+      - namespace
+      - release
+      - chart
+      - subchart
+      - values
+      - deploy_log_level
+      - deploy_test_log_level
+      - rollback_log_level
+      - rollback_test_log_level
+      - deploy_flags
+      - deploy_test_flags
+      - rollback_flags
+      - rollback_test_flags
+      - deploy_env_vars
+      - deploy_test_env_vars
+      - rollback_env_vars
+      - rollback_test_env_vars
+      - ignore_failed_release
+      - skip_deploy_steady_check
+      - skip_rollback_steady_check
+      - upgrade_with_install
+      - deploy_test
+      - rollback_test
+      - deploy_test_logs
+      - rollback_test_logs
+      - server_render
+  id: HelmDeployBasicStrategy
+  name: Helm Deploy Basic Strategy
+  description: Deploys a Helm chart using a basic strategy.
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Helm Basic Deploy
+          id: HelmDeployBasicStep
+          template:
+            uses: HelmDeployBasicStep@1.0.0
+            with:
+              release: ${{inputs.release}} 
+              kubeconfig: ${{inputs.kubeconfig}}
+              chart: ${{inputs.chart}}
+              subchart: ${{inputs.subchart}}
+              values: ${{inputs.values}}
+              namespace: ${{inputs.namespace}}
+              ignore_failed_release: ${{inputs.ignore_failed_release}}
+              skip_steady_check: ${{inputs.skip_deploy_steady_check}}
+              deploy_flags: ${{json.format(${{inputs.deploy_flags}})}}
+              test_flags: ${{json.format(${{inputs.deploy_test_flags}})}}
+              server_render: ${{inputs.server_render}}
+              test: ${{inputs.deploy_test}}
+              test_logs: ${{inputs.deploy_test_logs}}
+              deploy_log_level: ${{inputs.deploy_log_level}}
+              test_log_level: ${{inputs.deploy_test_log_level}}
+              deploy_env_vars: ${{inputs.deploy_env_vars}}
+              test_env_vars: ${{inputs.deploy_test_env_vars}}
+      rollback:
+        - name: Helm Rollback
+          id: HelmRollbackStep
+          template:
+            uses: HelmRollbackStep@1.0.0
+            with:
+              release: ${{inputs.release}} 
+              kubeconfig: ${{inputs.kubeconfig}}
+              namespace: ${{inputs.namespace}}
+              rollback_revision: ${{rollback.data.ROLLBACK_REVISION}}
+              skip_steady_check: ${{inputs.skip_rollback_steady_check}}
+              rollback_flags: ${{json.format(${{inputs.rollback_flags}})}}
+              test_flags: ${{json.format(${{inputs.rollback_test_flags}})}}
+              rollback_log_level: ${{inputs.rollback_log_level}}
+              test_log_level: ${{inputs.rollback_test_log_level}}
+              test: ${{inputs.rollback_test}}
+              test_logs: ${{inputs.rollback_test_logs}}
+              rollback_env_vars: ${{inputs.rollback_env_vars}}
+              test_env_vars: ${{inputs.rollback_test_env_vars}}

@@ -1,0 +1,212 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: Docker Connector
+      required: true
+      oneof:
+        - docker
+      ui:
+        tooltip: Select the Harness Docker connector.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    dockerfile:
+      type: string
+      label: Dockerfile
+      ui:
+        component: string
+        tooltip: Specify the Dockerfile name. If not provided, the Dockerfile is assumed to be in the root folder of the codebase.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    context:
+      type: string
+      label: Context
+      ui:
+        component: string
+        tooltip: Enter a path to a directory containing files that make up the build's context. When the pipeline runs, the build process can refer to any files found in the context. For example, a Dockerfile can use a COPY instruction to reference a file in the context.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    target:
+      type: string
+      label: Target
+      ui:
+        component: string
+        description: Specify the Docker target build stage as defined inside the Dockerfile.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    tags:
+      type: array
+      label: Tags
+      required: true
+      ui:
+        component: array
+        input:
+          inputType: text
+        tooltip: Specify one or more tags for the Docker image.
+        allowedValueTypes:
+          - fixed
+          - expression
+    buildargs:
+      type: key-value-pairs
+      label: Build Arguments
+      ui:
+        tooltip: Specify the Docker build-time variables (--build-arg).
+        allowedValueTypes:
+          - fixed
+          - runtime
+    repo:
+      type: string
+      label: Docker Repository
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the name of the repo. Use the format <hub-user>/<repo-name>. When using private Docker registries, use a fully qualified repo name.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    labels:
+      type: key-value-pairs
+      label: Labels
+      ui:
+        tooltip: Specify labels to add metadata to the Docker image.
+        allowedValueTypes:
+          - fixed
+          - runtime
+    cacheto:
+      type: string
+      ui:
+        component: ghost
+    cachefrom:
+      type: string
+      ui:
+        component: ghost
+    cacherepo:
+      type: string
+      label: Remote Cache Repository
+      ui:
+        component: string
+        tooltip: Enter the remote cache repository name. The remote cache repository needs to be created in the same account and organization as the build image. The repository must already exist for caching to work.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    caching:
+      type: boolean
+      label: Enable Docker Layer caching
+      default: true
+      required: true
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable or disable Docker Layer Caching.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    baseimageconnector:
+      type: connector
+      label: Base Image Connector
+      oneof:
+        - DockerRegistry
+      ui:
+        tooltip: Select an authenticated connector to download base images from a Docker-compliant container registry. If you don't select a Base Image Connector, the step downloads base images without authentication. Specifying a Base Image Connector is recommended because unauthenticated downloads generally have a lower rate limit than authenticated downloads. Works only with docker connectors.
+        allowedValueTypes:
+          - fixed
+          - runtime
+    envvars:
+      type: key-value-pairs
+      label: Environment Variables
+  layout:
+    - connector
+    - repo
+    - tags
+    - caching
+    - title: Optional Configuration
+      items:
+        - baseimageconnector
+        - envvars
+        - dockerfile
+        - context
+        - labels
+        - buildargs
+        - target
+        - cacherepo
+  id: buildAndPushToDocker
+  name: Build and push Docker
+  description: Build a Docker image from a Dockerfile and push it to a Docker registry. Supported on Linux only
+  version: 1
+  author: Harness
+  module:
+    - ci
+  alias: build
+  step:
+    group:
+      steps:
+        - if: <+size(<+inputs.caching>) != 0> && <+inputs.caching == true>
+          name: pushWithBuildx
+          id: pushWithBuildx
+          run:
+            container:
+              image: plugins/buildx
+            with:
+              USERNAME: ${{${{inputs.connector}}.username}}
+              PASSWORD: ${{${{inputs.connector}}.password}}
+              REGISTRY: ${{${{inputs.connector}}.url}}
+              DOCKERFILE: ${{inputs.dockerfile}}
+              CONTEXT: ${{inputs.context}}
+              TAGS: ${{inputs.tags}}
+              BUILD_ARGS: ${{inputs.buildargs}}
+              TARGET: <+inputs.target>
+              REPO: ${{inputs.repo}}
+              CUSTOM_LABELS: ${{inputs.labels}}
+              BASE_IMAGE_REGISTRY: ${{${{inputs.baseimageconnector}}.url}}
+              BASE_IMAGE_USERNAME: ${{${{inputs.baseimageconnector}}.username}}
+              BASE_IMAGE_PASSWORD: ${{${{inputs.baseimageconnector}}.password}}
+              CACHE_TO: ${{inputs.cacheto}}
+              BUILDER_DRIVER_OPTS: image=harness/buildkit:1.0.6
+              CACHE_METRICS_FILE: buildx-cache-metrics.json
+              CACHE_FROM: ${{inputs.cachefrom}}
+              METADATA_FILE: buildx-metadata.json
+              SNAPSHOT_MODE: redo
+              ENABLE_CACHE: true
+              CACHE_REPO: ${{inputs.cacherepo}}
+              ARTIFACT_FILE: /addon/tmp/.plugin/artifact
+              DAEMON_OFF: false
+        - if: <+size(<+inputs.caching>) == 0> || <+inputs.caching == false>
+          name: pushWithoutBuildx
+          id: pushWithoutBuildx
+          run:
+            container:
+              image: plugins/kaniko
+            with:
+              USERNAME: ${{${{inputs.connector}}.username}}
+              PASSWORD: ${{${{inputs.connector}}.password}}
+              REGISTRY: ${{${{inputs.connector}}.url}}
+              DOCKERFILE: ${{inputs.dockerfile}}
+              CONTEXT: ${{inputs.context}}
+              TAGS: ${{inputs.tags}}
+              BUILD_ARGS: ${{inputs.buildargs}}
+              TARGET: ${{inputs.target}}
+              REPO: ${{inputs.repo}}
+              CUSTOM_LABELS: ${{inputs.labels}}
+              BASE_IMAGE_REGISTRY: ${{${{inputs.baseimageconnector}}.url}}
+              BASE_IMAGE_USERNAME: ${{${{inputs.baseimageconnector}}.username}}
+              BASE_IMAGE_PASSWORD: ${{${{inputs.baseimageconnector}}.password}}
+              CACHE_TO: ${{inputs.cacheto}}
+              BUILDER_DRIVER_OPTS: image=harness/buildkit:1.0.6
+              CACHE_METRICS_FILE: buildx-cache-metrics.json
+              CACHE_FROM: ${{inputs.cachefrom}}
+              METADATA_FILE: buildx-metadata.json
+              SNAPSHOT_MODE: redo
+              ENABLE_CACHE: true
+              CACHE_REPO: ${{inputs.cacherepo}}
+              ARTIFACT_FILE: /addon/tmp/.plugin/artifact
+              DAEMON_OFF: true

@@ -1,0 +1,75 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS Connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS Connector for the AWS account where you want to perform deployment.
+    region:
+      type: string
+      label: Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Specify the relevant AWS region.
+    stack:
+      type: string
+      label: Stack details
+      required: true
+      ui:
+        component: string
+        input:
+          inputType: text
+        tooltip: Enter the JSON string of CloudFormation stack details.
+        placeholder: Enter stack details
+    log_level:
+      type: string
+      label: Log Level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the rollback step.
+  layout: 
+    - connector
+    - region
+    - stack
+    - title: Optional Configuration
+      items:
+        - log_level
+  id: serverlessRollback Step
+  name: Serverless Rollback Step
+  description: Creates a package for deployment
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Rollback
+          id: rollback
+          run:
+            container:
+              image: harnessdev/serverless-plugin:unified
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_CMD_TYPE: rollback
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_SERVERLESS_EXEC_PATH: ${{inputs.clipath}}
+              PLUGIN_STACK_DETAILS: ${{inputs.stack}}
+              

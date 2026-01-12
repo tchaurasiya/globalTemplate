@@ -1,0 +1,235 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Aws
+      ui:
+        tooltip: The Harness AWS connector for the AWS account where you want perform deployment.
+    region:
+      type: string
+      label: Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: The AWS region
+    build_cmd_log_level:
+      type: string
+      label: Log level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the build step.
+    deploy_cmd_log_level:
+      type: string
+      label: Log level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the deploy step.
+    build_cmd_timeout:
+      type: string
+      label: Command timeout
+      default: 10m
+      ui:
+        tooltip: AWS build command timeout
+    deploy_cmd_timeout:
+      type: string
+      label: Command timeout
+      default: 10m
+      ui:
+        tooltip: AWS deploy command timeout
+    docker_retry_count:
+      type: number
+      label: Docker retry count
+      default: 10
+      ui:
+        component: string
+        tooltip: Number of retries to check if Docker is running, required for sam build --use-container
+    build_cmd_pre_exec_cmd:
+      type: string
+      label: Pre-execute command
+      ui:
+        component: string
+        tooltip: Execute any necessary commands before running the AWS SAM build
+        placeholder: Enter a command to be executed prior to the build command
+    deploy_cmd_pre_exec_cmd:
+      type: string
+      label: Pre-execute command
+      ui:
+        component: string
+        tooltip: Execute any necessary commands before running the AWS SAM deploy
+        placeholder: Enter a command to be executed prior to the deploy command
+    work_dir:
+      type: string
+      label: Working directory
+      ui:
+        component: string
+        tooltip: AWS SAM working directory
+        placeholder: /awssam/dir
+    registry_url:
+      type: string
+      label: Docker Registry URL
+      ui:
+        component: string
+        tooltip: Docker Registry URL
+        placeholder: Enter docker registry URL
+    registry_username:
+      type: string
+      label: Docker Registry username
+      ui:
+        component: string
+        tooltip: Docker Registry username
+        placeholder: Enter docker registry username
+    registry_pwd:
+      type: string
+      label: Docker Registry password
+      ui:
+        component: secret-select
+        tooltip: Docker Registry password
+        placeholder: Select docker registry password
+    path:
+      type: string
+      label: Template file path
+      default: ${{service.manifests.dir.paths}}
+      ui:
+        component: string
+        tooltip: AWS SAM template file path
+        placeholder: /path/to/template/file
+    build_cmd_opts:
+      type: string
+      label: Command options
+      default: --use-container
+      ui:
+        component: string
+        input:
+          inputType: text
+        tooltip: Command options
+    deploy_cmd_opts:
+      type: string
+      label: Command options
+      default: --use-container
+      ui:
+        component: string
+        input:
+          inputType: text
+        tooltip: Command options
+    stack:
+      type: string
+      label: Stack
+      required: true
+      ui:
+        component: string
+        tooltip: AWS Cloud Formation stack
+        placeholder: Enter stack name
+    build_step: 
+      type: string
+      label: AWS SAM Build Step
+      default: awsSamBuildStep
+      required: true
+      ui:
+        tooltip: Enter the step for the AWS SAM Build step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+    deploy_step: 
+      type: string
+      label: AWS SAM Deploy Step
+      default: awsSamDeployStep
+      required: true
+      ui:
+        tooltip: Enter the step for the AWS SAM Deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+  layout:
+    - connector
+    - region
+    - stack
+    - build_step
+    - deploy_step
+    - title: Optional Configuration
+      items:
+        - work_dir
+        - title: Build Command
+          items:
+            - build_cmd_log_level
+            - path
+            - build_cmd_timeout
+            - build_cmd_pre_exec_cmd
+            - build_cmd_opts
+        - title: Deploy Command
+          items:
+            - deploy_cmd_log_level
+            - deploy_cmd_timeout
+            - deploy_cmd_pre_exec_cmd
+            - deploy_cmd_opts
+        - title: Docker Registry
+          items:
+            - docker_retry_count
+            - registry_url
+            - registry_username
+            - registry_pwd
+  id: awsSamDeployStrategy
+  name: AWS SAM Deploy Strategy
+  description: AWS SAM Deployment Strategy
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Docker in Docker Step
+          id: dind
+          background:
+            shell: sh
+            container:
+              image: docker:dind
+              connector: account.harnessImage
+              privileged: true
+        - name: Build
+          id: buildstep
+          template:
+            uses: ${{inputs.build_step}}
+            with:
+              connector: ${{inputs.connector}}
+              log_level: ${{inputs.package_log_level}}
+              timeout: ${{inputs.build_cmd_timeout}}
+              docker_retry_count: ${{inputs.docker_retry_count}}
+              pre_exec_cmd: ${{inputs.build_cmd_pre_exec_cmd}}
+              workdir: ${{inputs.work_dir}}
+              registry_url: ${{inputs.registry_url}}
+              registry_username: ${{inputs.registry_username}}
+              registry_pwd: ${{inputs.registry_pwd}}
+              region: ${{inputs.region}}
+              path: ${{inputs.path}}
+              cmd_opts: ${{inputs.build_cmd_opts}}
+        - name: Deploy
+          id: deploystep
+          template:
+            uses: ${{inputs.deploy_step}}
+            with:
+              connector: ${{inputs.connector}}
+              log_level: ${{inputs.package_log_level}}
+              timeout: ${{inputs.deploy_cmd_timeout}}
+              pre_exec_cmd: ${{inputs.deploy_cmd_pre_exec_cmd}}
+              workdir: ${{inputs.work_dir}}
+              registry_url: ${{inputs.registry_url}}
+              registry_username: ${{inputs.registry_username}}
+              registry_pwd: ${{inputs.registry_pwd}}
+              region: ${{inputs.region}}
+              stack: ${{inputs.stack}}
+              cmd_opts: ${{inputs.deploy_cmd_opts}}

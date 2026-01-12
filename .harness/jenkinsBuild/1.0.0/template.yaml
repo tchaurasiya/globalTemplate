@@ -1,0 +1,90 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: Jenkins Connector
+      required: true
+      oneof:
+        - Jenkins
+      ui:
+        tooltip: Select the Jenkins server connector reference.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+
+    job_name:
+      type: string
+      label: Job Name
+      required: true
+      ui:
+        tooltip: Enter the Jenkins job name to execute.
+
+    job_params:
+      type: list
+      label: Job Parameters
+      ui:
+        layout: grid
+        tooltip: Specify key-value pairs to pass to the Jenkins job as parameters.
+
+    unstable_success:
+      type: boolean
+      label: Treat Unstable as Success
+      default: false
+      ui:
+        tooltip: Enable to treat Jenkins UNSTABLE builds as SUCCESS instead of FAILURE.
+
+    use_connector:
+      type: boolean
+      label: Use Connector URL for Job Execution
+      default: false
+      ui:
+        tooltip: Enable to override Jenkins URLs with connector URL for job execution.
+    
+    log_frequency:
+      type: string
+      label: Console Log Poll Frequency
+      default: "5s"
+      ui:
+        tooltip: Specify the frequency to poll Jenkins console logs during build execution.
+
+  layout:
+    - title: Jenkins Configuration
+      items:
+        - connector
+        - job_name
+    - log_frequency
+    - title: Job Parameters
+      items:
+        - job_params
+    - title: Build Options
+      items:
+        - unstable_success
+        - use_connector
+
+
+  id: jenkinsBuild
+  name: Jenkins Build
+  description: Execute a Jenkins job and monitor its progress
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: build
+  step:
+    group:
+      steps:
+        - name: Jenkins Build
+          id: jenkins_build
+          run:
+            container:
+              image: harnessdev/jenkins-plugin:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_JOB_NAME: ${{inputs.job_name}}
+              PLUGIN_JOB_PARAM: ${{inputs.job_params}}
+              PLUGIN_UNSTABLE_SUCCESS: ${{inputs.unstable_success}}
+              PLUGIN_USE_CONNECTOR: ${{inputs.use_connector}}
+              PLUGIN_CAPTURE_ENV_VARS: true
+              PLUGIN_LOG_FREQUENCY: ${{inputs.log_frequency}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}

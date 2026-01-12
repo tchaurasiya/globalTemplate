@@ -1,0 +1,13 @@
+template:
+  stage:
+    clone:
+      disabled: true
+    steps:
+      - group:
+          steps:
+            - name: run
+              id: run
+              run:
+                script: echo hello
+        id: run_group
+        name: run_group

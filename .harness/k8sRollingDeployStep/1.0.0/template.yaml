@@ -1,0 +1,268 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    manifests:
+      type: array
+      label: Manifest Path
+      default: ${{runtime.manifestPath}}
+      ui:
+        component: array
+        input: 
+          inputType: text
+        tooltip: Enter a list of manifest file paths
+        placeholder: path/manifest
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+    service_id:
+      type: string
+      label: Service ID
+      default: ${{service.identifier}}
+      ui:
+        tooltip: Enter the service ID for release
+    environment_id:
+      type: string
+      label: Environment ID
+      default: ${{env.identifier}}
+      ui:
+        tooltip: Enter the environment ID for release
+    infra_id:
+      type: string
+      label: Infrastructure ID
+      default: ${{infra.identifier}}
+      ui:
+        tooltip: Enter the infrastructure ID for release
+    infra_key:
+      type: string
+      label: Infrastructure Key
+      default: ${{infra.infrastructureKey}}
+      ui:
+        tooltip: Enter the infrastructure key for release
+    skip_resource_versioning:
+      type: boolean
+      label: Skip Resource Versioning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip resource versioning
+    skip_adding_track_selector:
+      type: boolean
+      label: Skip Adding Track Selector
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip adding track selector to deployments
+
+    skip_dry_run:
+      type: boolean
+      label: Skip Dry Run
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip the dry run and apply changes directly to the cluster
+    pruning:
+      type: boolean
+      label: Kubernetes Pruning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Remove any resources that were present in an old manifest, but no longer present in the manifest used for the current deployment
+
+    print_manifests:
+      type: boolean
+      label: Print Manifests
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to print the manifests that will be applied
+    server_side_apply:
+      type: boolean
+      label: Server Side Apply
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to use server-side apply instead of client-side apply
+    encrypt_yaml_output:
+      type: boolean
+      label: Encrypt YAML Output
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to encrypt the output YAML file
+    flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Apply
+                  value: Apply
+                - label: Describe
+                  value: Describe
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    apply_timeout:
+      type: string
+      label: Apply command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during apply command execution
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+    
+    skip_steady_state_check:
+      type: boolean
+      label: Skip Steady State Check
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip the steady state check
+    describe_resources:
+      type: boolean
+      label: Describe Resources
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to describe resources during the steady state check
+        visible: ${{skipSteadyStateCheck == false}}
+    steady_state_timeout:
+      type: string
+      label: Steady state command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during steady state command execution
+        visible: ${{skipSteadyStateCheck == false}}
+
+  layout:
+    - title: Optional Configuration
+      items:
+        # Non-boolean fields first
+        - manifests
+        - kubeconfig
+        - namespace
+        - release
+        - service_id
+        - environment_id
+        - infra_id
+        - infra_key
+        - flags
+        - apply_timeout
+        - steady_state_timeout
+        - log_level
+        # Boolean fields grouped together
+        - skip_resource_versioning
+        - skip_adding_track_selector
+        - skip_dry_run
+        - pruning
+        - print_manifests
+        - server_side_apply
+        - encrypt_yaml_output
+        - skip_steady_state_check
+        - describe_resources
+  id: k8sRollingDeployStep
+  name: Kubernetes Rolling Deploy Step
+  description: Prepares manifests, applies them to cluster and check on resources steady state
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Kubernetes Rolling Prepare Action
+          id: k8sRollingPrepareAction
+          template:
+            uses: k8sRollingPrepareAction@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              namespace: ${{inputs.namespace}}
+              manifests: ${{inputs.manifests}}
+              release: ${{inputs.release}}
+              service_id: ${{inputs.service_id}}
+              environment_id: ${{inputs.environment_id}}
+              infra_id: ${{inputs.infra_id}}
+              infra_key: ${{inputs.infra_key}}
+              skip_resource_versioning: ${{inputs.skip_resource_versioning}}
+              skip_adding_track_selector: ${{inputs.skip_adding_track_selector}}
+              pruning: ${{inputs.pruning}}
+              log_level: ${{inputs.log_level}}
+        - name: Kubernetes Apply Action
+          id: k8sApplyAction
+          template:
+            uses: k8sApplyAction@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              namespace: ${{inputs.namespace}}
+              manifests: ${{${{runtime.fqn}}.k8sRollingPrepareAction.output.outputVariables.PLUGIN_MANIFEST_OUTPUT_PATH}}
+              skip_dry_run: ${{inputs.skip_dry_run}}
+              pruning: ${{inputs.pruning}}
+              server_side_apply: ${{inputs.server_side_apply}}
+              release: ${{inputs.release}}
+              PLUGIN_RELEASE_NUMBER: ${{${{runtime.fqn}}.k8sRollingPrepareAction.output.outputVariables.PLUGIN_RELEASE_NUMBER}}
+              service_id: ${{inputs.service_id}}
+              environment_id: ${{inputs.environment_id}}
+              infra_id: ${{inputs.infra_id}}
+              infra_key: ${{inputs.infra_key}}
+              print_manifests: ${{inputs.print_manifests}}
+              encrypt_yaml_output: ${{inputs.encrypt_yaml_output}}
+              flags: ${{inputs.flags}}
+              only_dry_run: false
+              log_level: ${{inputs.log_level}}
+              timeout: ${{inputs.apply_timeout}}
+        - if: ${{inputs.skip_steady_state_check == false}}
+          name: Kubernetes Steady State Check Action
+          id: k8sSteadyStateCheckAction
+          template:
+            uses: k8sSteadyStateCheckAction@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              release: ${{inputs.release}}
+              release_number: ${{${{runtime.fqn}}.k8sApplyAction.output.outputVariables.PLUGIN_RELEASE_NUMBER}}
+              service_id: ${{inputs.service_id}}
+              environment_id: ${{inputs.environment_id}}
+              infra_id: ${{inputs.infra_id}}
+              infra_key: ${{inputs.infra_key}}
+              namespace: ${{inputs.namespace}}
+              describe_resources: ${{inputs.describe_resources}}
+              managed_workloads: ${{${{runtime.fqn}}.k8sApplyAction.output.outputVariables.PLUGIN_MANAGED_WORKLOADS}}
+              custom_workloads: ${{${{runtime.fqn}}.k8sApplyAction.output.outputVariables.PLUGIN_CUSTOM_WORKLOADS}}
+              existing_pods: ${{${{runtime.fqn}}.k8sApplyAction.output.outputVariables.PLUGIN_EXISTING_PODS}}
+              manifest: ${{${{runtime.fqn}}.k8sApplyAction.output.outputVariables.PLUGIN_MANIFEST_OUTPUT_FILE_PATH}}
+              timeout: ${{inputs.steady_state_timeout}}
+              is_openshift: ${{${{runtime.fqn}}.k8sApplyAction.output.outputVariables.HARNESS_IS_OPENSHIFT}}
+              

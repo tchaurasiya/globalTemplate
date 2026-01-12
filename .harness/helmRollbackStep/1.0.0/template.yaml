@@ -1,0 +1,198 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment.
+    release:
+      type: string
+      label: Release
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the Helm release name.
+    rollback_revision:
+      type: number
+      label: Helm Rollback Revision
+      default: ${{rollback.data.ROLLBACK_REVISION}}
+      ui:
+        tooltip: Enter the target release revision for Helm rollback.
+    skip_steady_check:
+      type: boolean
+      label: Skip Steady Check
+      default: false
+      ui:
+        tooltip: Enable this option to skip the steady state check after Helm rollback.
+        component: boolean-card-select
+    test:
+      type: boolean
+      label: Helm Test
+      default: false
+      ui:
+        tooltip: Enable this option to run Helm chart tests after rollback.
+        component: boolean-card-select
+    test_logs:
+      type: boolean
+      label: Test Logs
+      default: false
+      ui:
+        tooltip: Enable this option to print logs from Helm chart test pods.
+        visible: ${{test == true}}
+        component: boolean-card-select
+    rollback_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: get manifest
+                  value: get_manifest
+                - label: list
+                  value: list
+                - label: history
+                  value: history
+                - label: install
+                  value: install
+                - label: upgrade
+                  value: upgrade
+                - label: rollback
+                  value: rollback
+                - label: uninstall
+                  value: uninstall
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+    test_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: test
+                  value: test
+                - label: template
+                  value: template
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+    rollback_env_vars:
+      type: list
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the rollback step.
+    test_env_vars:
+      type: list
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter environment variables to pass to the test step during rollback.
+    rollback_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the rollback step.
+    test_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the test step during rollback.
+  layout:
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - release
+        - rollback_revision
+        - rollback_log_level
+        - test_log_level
+        - rollback_flags
+        - test_flags
+        - rollback_env_vars
+        - test_env_vars
+        - skip_steady_check
+        - test
+        - test_logs
+  id: HelmRollbackStep
+  name: Helm Rollback
+  description: Rolls back a Helm release.
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Helm Rollback
+          id: HelmRollbackStep
+          run:
+            container:
+              image: harnessdev/helm-rollback:linux-amd64-0.0.5
+              connector: account.harnessImage
+            env:
+              PLUGIN_RELEASE_NAME: ${{inputs.release}} 
+              PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+              PLUGIN_NAMESPACE: ${{inputs.namespace}}
+              PLUGIN_ROLLBACK_REVISION: ${{inputs.rollback_revision}}
+              PLUGIN_SKIP_STEADY_STATE_CHECK: ${{inputs.skip_steady_check}}
+              PLUGIN_STEADY_STATE_CHECK_FOR_JOBS: ${{runtime.setting.native_helm_enable_steady_state_for_jobs}}
+              PLUGIN_COMMAND_FLAGS: ${{json.format(${{inputs.rollback_flags}})}}
+              PLUGIN_ENFORCE_INFRA_NAMESPACE: ${{runtime.setting.enable_namespace_override_validation_infrastructure_level_namespace}}
+              PLUGIN_LOG_LEVEL: ${{inputs.rollback_log_level}}
+              PLUGIN_ENV_VARS: ${{inputs.rollback_env_vars}}
+        - if: ${{inputs.test == true}}
+          name: Helm Test
+          id: HelmTestStep
+          run:
+            container:
+              image: harnessdev/helm-test:linux-amd64-0.0.5
+              connector: account.harnessImage
+            env:
+              PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+              PLUGIN_NAMESPACE: ${{inputs.namespace}}
+              PLUGIN_RELEASE_NAME: ${{inputs.release}} 
+              PLUGIN_COMMAND_FLAGS: ${{json.format(${{inputs.test_flags}})}}
+              PLUGIN_PRINT_LOGS: ${{inputs.test_logs}}
+              PLUGIN_ENFORCE_INFRA_NAMESPACE: ${{runtime.setting.enable_namespace_override_validation_infrastructure_level_namespace}}
+              PLUGIN_LOG_LEVEL: ${{inputs.test_log_level}}
+              PLUGIN_ENV_VARS: ${{inputs.test_env_vars}}

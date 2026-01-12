@@ -1,0 +1,99 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+        placeholder: release
+    timeout:
+      type: string
+      label: Scale command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during scale command execution
+    is_openshift:
+      type: boolean
+      label: OpenShift Mode
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to mark if this is OpenShift deployment
+    pruning:
+      type: boolean
+      label: Resource Deletion
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: By default, Harness scales down the deployments, statefulsets, daemonsets and deployment configs to 0 replicas. Enabling this checkbox will result in deletion of these resources
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+  layout:
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - release
+        - timeout
+        - log_level
+        - pruning
+        - is_openshift
+  id: k8sBlueGreenStageScaleDownStep
+  name: Kubernetes Blue Green Stage Scale Down
+  description: Scales down the stage environment created during blue-green deployment.
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Kubernetes Blue Green Stage Scale Down
+          id: k8sBlueGreenStageScaleDownStep
+          run:
+            container:
+              image: harnessdev/k8s-bluegreen-scale-down:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+              PLUGIN_NAMESPACE: ${{inputs.namespace}}
+              PLUGIN_RELEASE_NAME: ${{inputs.release}}
+              PLUGIN_TIMEOUT: ${{inputs.timeout}}
+              HARNESS_IS_OPENSHIFT: ${{inputs.is_openshift}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+        - if: ${{inputs.pruning == true}}
+          name: K8s Bluegreen Scale Down Delete Step
+          id: k8sBluegreenScaleDownDeleteStep
+          template:
+            uses: k8sDeleteStep@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              resources: ${{${{runtime.fqn}}.k8sBlueGreenStageScaleDownStep.output.outputVariables.PLUGIN_SCALED_RESOURCES}}
+              namespace: ${{inputs.namespace}}
+              log_level: ${{inputs.log_level}}
+              is_openshift: ${{inputs.is_openshift}}

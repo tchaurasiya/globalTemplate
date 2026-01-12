@@ -1,0 +1,57 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: Bamboo Connector
+      required: true
+      oneof:
+        - Bamboo
+      ui:
+        tooltip: Bamboo server connector reference
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+
+    plan:
+      type: string
+      label: Plan Name
+      required: true
+      ui:
+        tooltip: Plan name to execute
+
+    plan_params:
+      type: list
+      label: Plan Params
+      ui:
+        layout: grid
+        tooltip: Key-value pairs passed to plan as parameters
+
+  layout:
+    - connector
+    - plan
+    - title: Optional Configuration
+      items:
+        - plan_params
+
+  id: bambooBuild
+  name: Bamboo Build
+  description: Execute a Bamboo plan and monitor its progress
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: build
+  step:
+    group:
+      steps:
+        - name: Bamboo Build
+          id: bamboo_build
+          run:
+            container:
+              image: harnessdev/bamboo-plugin:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_PLAN: ${{inputs.plan}}
+              PLUGIN_PLAN_PARAMS: ${{inputs.plan_params}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}

@@ -1,0 +1,106 @@
+template:
+  inputs:
+    tech_stack:
+      type: string
+      label: Tech stack language
+      required: true
+      default: java
+      options:
+        - java
+        - go
+        - dotnet
+        - python
+      ui:
+        component: select
+        tooltip: Select the language of your infrastructure code repository
+    connector:
+      type: connector
+      label: AWS connector
+      required: true
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS connector for the AWS account where you want to perform deployment
+        placeholder: Select AWS connector
+    region:
+      type: string
+      label: Region
+      required: true
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Specify the AWS region for deployment
+    log_level:
+      type: string
+      label: Log level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the build step
+    stacks:
+      type: array
+      label: Stack names
+      ui:
+        component: array
+        input:
+          inputType: text
+        tooltip: Enter the CDK stack names
+        placeholder: Enter CDK stack names
+    app_path:
+      type: string
+      label: App path
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the CDK app path (this will be appended to PLUGIN_WORK_DIR)
+        placeholder: Enter CDK app path (this will be appended to PLUGIN_WORK_DIR)
+    cmd_opts:
+      type: string
+      label: Command options
+      ui:
+        component: string
+        input:
+          inputType: text
+        tooltip: Enter additional command options for the CDK destroy command
+        placeholder: Enter CDK deploy command options
+  layout: 
+    - app_path
+    - connector
+    - region
+    - tech_stack
+    - title: Optional Configuration
+      items:
+        - cmd_opts
+        - stacks
+        - log_level
+  id: awsCdkDestroyStep
+  name: AWS CDK Destroy Step
+  description: Deletes infrastructure in AWS
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: destroy
+  step:
+    group:
+      steps:
+        - name: Destroy
+          id: destroy
+          run:
+            container:
+              image: harnessdev/aws-cdk:0.0.1-${{inputs.tech_stack}}
+              connector: account.harnessImage
+            env:
+              PLUGIN_ACTION: destroy
+              PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
+              PLUGIN_APP_PATH: ${{inputs.app_path}}
+              PLUGIN_STACKS: ${{inputs.stacks}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_REGION: ${{inputs.connector}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}

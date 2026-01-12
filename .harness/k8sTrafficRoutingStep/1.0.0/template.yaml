@@ -1,0 +1,208 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to your kubeconfig file
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for this deployment
+    config_type:
+      type: string
+      label: Config Type
+      default: new
+      options:
+        - new
+        - update
+      ui:
+        component: select
+        tooltip: Select the config type
+    provider:
+      type: string
+      label: Provider
+      default: istio
+      options:
+        - istio
+        - k8s-native
+      ui:
+        component: select
+        tooltip: Select the traffic shift provider
+    resource_name:
+      type: string
+      label: Resource Name
+      default: traffic-split-${{service.name}}
+      ui:
+        tooltip: Enter the name of the Kubernetes resource (auto-generated if not provided)
+        placeholder: resource name
+    hosts:
+      type: array
+      label: Hosts
+      ui:
+        component: array
+        input: 
+          inputType: text
+        tooltip: Enter the list of host names
+        placeholder: hostname
+    gateways:
+      type: array
+      label: Gateways
+      ui:
+        component: array
+        input: 
+          inputType: text
+        tooltip: Enter the list of gateway names or fully qualified names
+        placeholder: gateway name       
+    routes:
+      type: string
+      label: Configure Routes
+      ui:
+        component: textarea
+        tooltip: Enter the JSON configuration for traffic shift routes
+        placeholder: '[{"name":"route1","destinations":[{"host":"svc","weight":60},{"host":"svc-canary","weight":40}]}]'
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for this Harness release
+    release_number:
+      type: number
+      label: Release Number
+      default: 0
+      ui:
+        component: number
+        tooltip: Enter the release number for tracking
+    service_id:
+      type: string
+      label: Service ID
+      default: ${{service.identifier}}
+      ui:
+        tooltip: Enter the service identifier for this release
+    environment_id:
+      type: string
+      label: Environment ID
+      default: ${{env.identifier}}
+      ui:
+        tooltip: Enter the environment identifier for this release
+    infra_id:
+      type: string
+      label: Infrastructure ID
+      default: ${{infra.identifier}}
+      ui:
+        tooltip: Enter the infrastructure identifier for this release
+    infra_key:
+      type: string
+      label: Infrastructure Key
+      default: ${{infra.infrastructureKey}}
+      ui:
+        tooltip: Enter the infrastructure key for this release
+    server_side_apply:
+      type: boolean
+      label: Server Side Apply
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Use server-side apply instead of client-side apply
+    prepare_only:
+      type: boolean
+      label: Only Prepare Manifests
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Only prepare manifests without applying them
+    manifest_output_path:
+      type: string
+      label: Manifest Output Path
+      ui:
+        tooltip: Enter the directory path for the consolidated manifest output
+        placeholder: path/manifest/output
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+    timeout:
+      type: string
+      label: Apply command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout for the apply command execution
+    is_openshift:
+      type: boolean
+      label: OpenShift Mode
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to mark if this is OpenShift deployment
+  layout:
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - config_type
+        - provider
+        - hosts
+        - gateways
+        - routes
+        - resource_name
+        - release
+        - release_number
+        - service_id
+        - environment_id
+        - infra_id
+        - infra_key
+        - manifest_output_path
+        - timeout
+        - log_level
+        - server_side_apply
+        - prepare_only
+        - is_openshift
+  id: k8sTrafficShiftStep
+  name: Kubernetes Traffic Shift
+  description: Shifts traffic between different versions of a service
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    name: Kubernetes Traffic Shift
+    id: k8sTrafficShiftStep
+    run:
+      container:
+        image: harnessdev/k8s-traffic-shift:0.0.1
+        connector: account.harnessImage
+      env:
+        PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+        PLUGIN_PROVIDER: ${{inputs.provider}}
+        PLUGIN_CONFIG: ${{inputs.config_type}}
+        PLUGIN_GATEWAYS: ${{inputs.gateways}}
+        PLUGIN_HOSTNAMES: ${{inputs.hosts}}
+        PLUGIN_RESOURCE_NAME: ${{inputs.resource_name}}
+        PLUGIN_ROUTES: ${{json.format(${{inputs.routes}})}}
+        PLUGIN_NAMESPACE: ${{inputs.namespace}}
+        PLUGIN_RELEASE_NAME: ${{inputs.release}}
+        PLUGIN_RELEASE_NUMBER: ${{inputs.release_number}}
+        PLUGIN_SERVICE_ID: ${{inputs.service_id}}
+        PLUGIN_ENVIRONMENT_ID: ${{inputs.environment_id}}
+        PLUGIN_INFRA_ID: ${{inputs.infra_id}}
+        PLUGIN_INFRA_KEY: ${{inputs.infra_key}}
+        PLUGIN_SERVER_SIDE_APPLY: ${{inputs.server_side_apply}}
+        PLUGIN_PREPARE: ${{inputs.prepare_only}}
+        PLUGIN_MANIFEST_OUTPUT_PATH: ${{inputs.manifest_output_path}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+        PLUGIN_TIMEOUT: ${{inputs.timeout}}
+        HARNESS_IS_OPENSHIFT: ${{inputs.is_openshift}}

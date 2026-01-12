@@ -1,0 +1,149 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    command:
+      type: string
+      label: Command
+      required: true
+      options:
+        - restart
+        - resume
+        - status
+        - undo
+        - pause
+        - history
+      ui:
+        component: select
+        tooltip: Select a kubectl rollout command to manage the rollout of a Kubernetes application. Use it to check the status, pause, resume, undo, history, or restart a deployment.
+    select_rollout_resources:
+      type: select
+      label: Rollout Resources By
+      default: resources
+      options:
+        - resources
+        - manifests
+        - release name
+    resources:
+      type: array
+      label: Resource Name
+      ui:
+        component: array
+        input: 
+          inputType: text
+        visible: ${{selectRolloutResources == "resources"}}
+        tooltip: Enter a list of resources in format [ns/kind/name].
+        placeholder: ns/kind/name
+    manifests:
+      type: array
+      label: Manifest Path
+      ui:
+        component: array
+        input: 
+          inputType: text
+        visible: ${{selectRolloutResources == "manifests"}}
+        tooltip: Enter a list of manifest file paths
+        placeholder: path/manifest
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        visible: ${{selectRolloutResources == "release name"}}
+        tooltip: Enter the release name
+        placeholder: release
+    flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Rollout
+                  value: Rollout
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+    timeout:
+      type: string
+      label: Rollout command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during rollout command execution
+    is_openshift:
+      type: boolean
+      label: OpenShift Mode
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to mark if this is OpenShift deployment
+  layout:
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - command
+        - select_rollout_resources
+        - resources
+        - manifests
+        - release
+        - flags
+        - timeout
+        - log_level
+        - is_openshift
+  id: k8sRolloutStep
+  name: Kubernetes Rollout
+  description: Rolls out resources by name, manifest path, or release name
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    name: K8s Rollout Step
+    id: k8sRolloutStep
+    run:
+      container:
+        image: harnessdev/k8s-rollout:0.0.1
+        connector: account.harnessImage
+      env:
+        PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+        PLUGIN_NAMESPACE: ${{inputs.namespace}}
+        PLUGIN_COMMAND: ${{inputs.command}}
+        PLUGIN_RESOURCES: ${{inputs.resources}}
+        PLUGIN_MANIFESTS: ${{inputs.manifests}}
+        PLUGIN_RELEASE_NAME: ${{inputs.release}}
+        PLUGIN_FLAGS_JSON: ${{json.format(${{inputs.flags}})}}
+        PLUGIN_TIMEOUT: ${{inputs.timeout}}
+        HARNESS_IS_OPENSHIFT: ${{inputs.is_openshift}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}

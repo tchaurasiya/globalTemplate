@@ -1,0 +1,102 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: GCP Connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Gcp
+      ui:
+        tooltip: Select the Harness GCP Connector for the GCP account where you want to perform deployment
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    region:
+      type: string
+      label: GCP Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        tooltip: Enter the GCP region where you want to deploy the service
+    project:
+      type: string
+      label: GCP Project
+      required: true
+      default: ${{infra.project}}
+      ui:
+        component: string
+        tooltip: Enter the GCP project where you want to deploy the service
+    manifest:
+      type: string
+      label: Service Manifest Path
+      required: true
+      default: ${{service.manifests.gcr.paths}}
+      ui:
+        component: string
+        tooltip: Specify the path where the service manifest is located on the shared volume
+    metadata:
+      type: string
+      label: Revision Metadata
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the base64 encoded value of the revision and traffic weights
+    cmd_timeout:
+      type: string
+      label: Command Timeout
+      default: 10m
+      ui:
+        component: string
+        tooltip: Specify the timeout for Google Cloud Run commands being executed
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+  layout:
+    - connector
+    - region
+    - project
+    - manifest
+    - metadata
+    - title: Optional Configuration
+      items:
+        - cmd_timeout
+        - log_level
+  id: GoogleCloudRunTrafficShiftStep
+  name: Google Cloud Run Traffic Shift Step
+  description: Shift traffic between revisions for Google Cloud Run service
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Google Cloud Run Traffic Shift
+          id: googleCloudRunTrafficShift
+          run:
+            container:
+              image: harnessdev/google-cloud-run-traffic-shift:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_PROJECT: ${{inputs.project}}
+              PLUGIN_CMD_TIMEOUT: ${{inputs.cmd_timeout}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_MANIFEST_PATH: ${{inputs.manifest}}
+              PLUGIN_REVISION_METADATA: ${{inputs.metadata}}
+
+

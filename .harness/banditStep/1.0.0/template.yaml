@@ -1,0 +1,269 @@
+template:
+  inputs:
+    mode:
+      type: choice
+      label: Scan Mode
+      required: true
+      options:
+        - orchestratedScan
+        - manualUpload
+      default: orchestratedScan
+      ui:
+        component: select
+        tooltip: Select the scan execution mode - Orchestration runs the scan in Harness infrastructure, Ingestion processes external scan results
+    configuration:
+      type: string
+      label: Scan Configuration
+      required: true
+      options:
+        - default
+      default: default
+      ui:
+        component: display
+        readonly: true
+        tooltip: Bandit always uses default scan configuration.
+    type:
+      type: choice
+      label: Target Type
+      required: true
+      options:
+        - repository
+      default: repository
+      ui:
+        component: select
+        tooltip: Select the target type to scan - Repository
+    detection:
+      type: choice
+      label: Target and Variant Detection
+      required: true
+      options:
+        - auto
+        - manual
+      default: auto
+      ui:
+        component: radio
+        tooltip: Select automatic or manual target detection.
+    target:
+      type: string
+      label: Name
+      ui:
+        component: string
+        visible: ${{detection == "manual"}}
+        placeholder: pythonApp
+        tooltip: Enter the label that you want to assign to the target you're scanning. This is the target name that will appear in the UI. Use a unique, descriptive name.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    variant:
+      type: string
+      label: Variant
+      ui:
+        component: string
+        visible: ${{detection == "manual"}}
+        placeholder: main
+        tooltip: Enter an identifier for a specific target to scan, such as the branch name. This identifier is used to differentiate or group results for a target.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    ingestion_file:
+      type: string
+      label: Ingestion File
+      required: false
+      ui:
+        component: string
+        visible: ${{mode == "ingestion"}}
+        placeholder: bandit-results.json
+        tooltip: Enter the path to the Bandit scan results file for ingestion.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    workspace:
+      type: string
+      label: Workspace
+      required: false
+      default: /harness
+      ui:
+        component: string
+        visible: ${{type == "repository"}}
+        placeholder: /harness
+        tooltip: Enter the repository workspace path for scanning.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    log_level:
+      type: choice
+      label: Log Level
+      required: false
+      options:
+        - debug
+        - info
+        - warning
+        - error
+      default: info
+      ui:
+        component: select
+        tooltip: Select the log level for the scan.
+    cli_flags:
+      type: string
+      label: Additional CLI flags
+      required: false
+      ui:
+        component: string
+        placeholder: "--skip B101,B601"
+        tooltip: Enter additional command-line flags to pass to the Bandit scanner.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    severity:
+      type: choice
+      label: Fail On Severity
+      required: false
+      options:
+        - critical
+        - high
+        - medium
+        - low
+        - info
+      ui:
+        component: select
+        placeholder: Select
+        tooltip: Select the severity level to fail the pipeline if issues of this severity or higher are found.
+    settings:
+      type: list
+      label: Settings
+      required: false
+      ui:
+        component: key-value-pairs
+        tooltip: Specify additional settings for Bandit scanner configuration.
+        allowedValueTypes:
+          - fixed
+          - runtime
+    override:
+      type: boolean
+      label: Override Security Test Image
+      default: false
+      ui:
+        tooltip: Enable to override the default Bandit scanner container image.
+    registry:
+      type: connector
+      label: Image Connector
+      default: account.harnessImage
+      oneof:
+        - docker
+      ui:
+        visible: ${{override == true}}
+        tooltip: Select the container registry connector for custom Bandit image.
+        placeholder: Select
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    tag:
+      type: string
+      label: Image Tag
+      required: false
+      default: latest
+      ui:
+        component: string
+        visible: ${{override == true}}
+        placeholder: latest
+        tooltip: Specify the container image tag for custom Bandit image.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    pull_policy:
+      type: choice
+      label: Image Pull Policy
+      required: false
+      default: always
+      options:
+        - always
+        - if-not-present
+        - never
+      ui:
+        component: select
+        visible: ${{override == true}}
+        placeholder: Select
+        tooltip: Select the container image pull policy.
+    user:
+      type: number
+      label: Run as User
+      required: false
+      default: 1000
+      ui:
+        component: number
+        visible: ${{override == true}}
+        placeholder: "1000"
+        tooltip: Specify the user ID to run the container as.
+        validation:
+          min: 0
+          max: 65535
+  layout:
+    - title: Basic Configuration
+      items:
+        - mode
+        - configuration
+        - type
+        - detection
+        - target
+        - variant
+        - ingestion_file
+    - title: Repository Configuration
+      collapsed: false
+      visible: ${{type == "repository"}}
+      items:
+        - workspace
+    - title: Scanner Configuration
+      collapsed: true
+      items:
+        - log_level
+        - cli_flags
+        - severity
+        - settings
+    - title: Additional Configuration
+      collapsed: true
+      items:
+        - override
+        - registry
+        - tag
+        - pull_policy
+        - user
+  id: banditStep
+  name: Bandit Security Scan Step
+  description: Performs Python security vulnerability scanning using Bandit static analysis security scanner
+  version: 1
+  author: harness
+  module:
+    - ci
+    - sto
+  alias: bandit-scan
+  step:
+    name: bandit
+    id: bandit
+    run:
+      container:
+        image: harness/bandit-job-runner:${{inputs.tag}}
+        connector: ${{inputs.registry.id}}
+        pull_policy: ${{inputs.pull_policy}}
+        user: ${{inputs.user}}
+      env:
+        PRODUCT_NAME: bandit
+        POLICY_TYPE: ${{inputs.mode}}
+        PRODUCT_CONFIG_NAME: ${{inputs.configuration}}
+        SCAN_TYPE: ${{inputs.type}}
+        POLICY_TARGET_DETECTION: ${{inputs.detection}}
+        REPOSITORY_PROJECT: ${{inputs.target}}
+        REPOSITORY_BRANCH: ${{inputs.variant}}
+        POLICY_INGESTION_FILE: ${{inputs.ingestion_file}}
+        WORKSPACE: ${{inputs.workspace}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+        TOOL_ARGS: ${{inputs.cli_flags}}
+        FAIL_ON_SEVERITY: ${{inputs.severity}}
+        PRODUCT_SCAN_SETTINGS: ${{inputs.settings}}
+        STEP_ID: STO_UNIFIED_STEP

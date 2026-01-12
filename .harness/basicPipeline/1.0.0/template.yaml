@@ -1,0 +1,21 @@
+template:
+  inputs:
+    template_input_a:
+      type: string
+    template_input_b:
+      type: string
+  pipeline:
+    clone:
+      disabled: true
+    stages:
+      - steps:
+          - run: echo hello ${{inputs.template_input_a}}
+        rollback:
+          - run: echo in rollback
+      - steps:
+          - run: echo hello ${{inputs.template_input_b}}
+        rollback:
+          - run: echo in rollback
+        on-failure:
+          errors: all
+          action: pipeline-rollback

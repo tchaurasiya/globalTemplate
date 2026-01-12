@@ -1,0 +1,228 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS Connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS Connector for the AWS account where you want to perform deployment.
+    path:
+      type: string
+      label: Serverless.yaml path
+      ui:
+        component: string
+        tooltip: Specify the path to the serverless custom manifest file.
+        placeholder: /path/to/serverless.yaml
+    work_dir:
+      type: string
+      label: Serverless directory
+      ui:
+        component: string
+        tooltip: Specify the serverless working directory.
+        placeholder: /serverless/dir
+    region:
+      type: string
+      label: Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Specify the relevant AWS region.
+    stack:
+      type: boolean
+      label: Get only stack details
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable to only perform retrieval of stack details without deployment.
+    stage:
+      type: string
+      label: Stage
+      required: true
+      default: ${{infra.stage}}
+      ui:
+        component: string
+        tooltip: Specify the serverless stage.
+    client_path:
+      type: string
+      label: Serverless CLI path
+      default: serverless
+      ui:
+        tooltip: Specify the path to the serverless CLI executable.
+    package_cmd_timeout:
+      type: string
+      label: Package command timeout
+      default: 10m
+      ui:
+        tooltip: Specify the serverless package CLI command timeout.
+    package_cmd_opts:
+      type: boolean
+      label: Package command options
+      ui:
+        component: string
+        input:
+          inputType: text
+        tooltip: Specify serverless package command options.
+        placeholder: Enter package command options
+    package_log_level:
+      type: string
+      label: Package command log Level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the package step.
+    package_step:
+      type: string
+      label: Serverless Package Step
+      default: serverlessPackageStep
+      required: true
+      ui:
+        tooltip: Enter the step for the serverless package step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+    deploy_cmd_timeout:
+      type: string
+      label: Deploy command timeout
+      default: 10m
+      ui:
+        tooltip: Specify the serverless deploy CLI command timeout.
+    deploy_cmd_opts:
+      type: boolean
+      label: Deploy command options
+      ui:
+        component: string
+        input:
+          inputType: text
+        tooltip: Specify serverless deploy command options.
+        placeholder: Enter deploy command options
+    deploy_log_level:
+      type: string
+      label: Deploy command log Level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the deploy step.
+    deploy_step:
+      type: string
+      label: Serverless Deploy Step
+      default: serverlessDeployStep
+      required: true
+      ui:
+        tooltip: Enter the step for the serverless deploy step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+    rollback_log_level:
+      type: string
+      label: Rollback command log Level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the rollback step.
+    rollback_step:
+      type: string
+      label: Serverless Rollback Step
+      default: serverlessRollbackStep
+      required: true
+      ui:
+        tooltip: Enter the step for the serverless rollback step. If version is not specified, stable version will be used. Format is stepTemplateName:version.
+  layout: 
+    - connector
+    - region
+    - stage
+    - title: Optional Configuration
+      items:
+        - title: Manifest Options
+          items:
+            - path
+            - work_dir
+        - title: Execution
+          items:
+            - title: Package command
+              items:
+                - package_cmd_timeout
+                - package_cmd_opts
+                - package_log_level
+                - package_step
+            - title: Deploy command
+              items:
+                - deploy_cmd_timeout
+                - deploy_cmd_opts
+                - stack
+                - deploy_log_level
+                - deploy_step
+            - client_path
+        - title: Rollback
+          items:
+            - rollback_log_level
+            - rollback_step
+  id: serverlessDeployWithRollbackStrategy
+  name: Serverless Deployment With Rollback Strategy
+  description: Harness managed Serverless framework deployment with rollback.
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Package
+          id: packagestep
+          template:
+            uses: ${{inputs.package_step}}
+            with:
+              connector: ${{inputs.connector}}
+              path: ${{inputs.path}}
+              work_dir: ${{inputs.work_dir}}
+              region: ${{inputs.region}}
+              stage: ${{inputs.stage}}
+              client_path: ${{inputs.client_path}}
+              timeout: ${{inputs.package_cmd_timeout}}
+              cmd_opts: ${{inputs.package_cmd_opts}}
+              log_level: ${{inputs.package_log_level}}
+        - name: Deploy
+          id: deploystep
+          template:
+            uses: ${{inputs.deploy_step}}
+            with:
+              connector: ${{inputs.connector}}
+              path: ${{inputs.path}}
+              work_dir: ${{inputs.work_dir}}
+              region: ${{inputs.region}}
+              stack: ${{inputs.stack}}
+              stage: ${{inputs.stage}}
+              client_path: ${{inputs.client_path}}
+              timeout: ${{inputs.deploy_cmd_timeout}}
+              cmd_opts: ${{inputs.deploy_cmd_opts}}
+              log_level: ${{inputs.deploy_log_level}}
+      rollback:
+        - name: Rollback
+          id: rollbackstep
+          template:
+            uses: ${{inputs.rollbackstep}}
+            with:
+              connector: ${{inputs.connector}}
+              region: ${{inputs.region}}
+              stack: ${{${{runtime.fqn}}.deploystep.output.outputVariables.PLUGIN_STACK_DETAILS}}
+              log_level: ${{inputs.rollback_log_level}}
+      on-failure:
+        errors: all
+        action: stage-rollback

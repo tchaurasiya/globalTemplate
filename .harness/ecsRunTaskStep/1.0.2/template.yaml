@@ -1,0 +1,131 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS Connector for the AWS account where you want to perform ECS task
+        placeholder: Select AWS Connector
+    cluster:
+      type: string
+      label: Cluster
+      required: true
+      default: ${{infra.cluster}}
+      ui:
+        component: string
+        tooltip: Enter the AWS cluster name where the ECS task will run
+    region:
+      type: string
+      label: Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Enter the AWS region where the ECS cluster is located
+    log_level:
+      type: string
+      label: Log level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the build step
+    task_def_mode:
+      type: string
+      label: Task definition
+      default: ECS Run Task Definition
+      required: true
+      options:
+        - ECS Run Task Definition
+        - ECS Run Task Definition ARN
+      ui:
+        component: select
+    task_request_def:
+      type: string
+      label: Task request definition
+      ui:
+        component: string
+        tooltip: Enter the path to the file containing task request definition
+        placeholder: /path/to/file
+    task_def:
+      type: string
+      label: ECS run task definition
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the path to the file containing task definition
+        placeholder: /path/to/file
+        visible: ${{taskDefMode == 'ECS Run Task Definition'}}
+    task_def_arn:
+      type: string
+      label: ECS run task definition ARN
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the ARN value of the task definition
+        placeholder: Enter the ARN
+        visible: ${{taskDefMode == 'ECS Run Task Definition ARN'}}
+    skip_steady_state:
+      type: boolean
+      label: Skip steady state check
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Turn on to skip steady state check 
+    steady_state_timeout:
+      type: string
+      label: Steady state check command timeout
+      default: 5m
+      ui:
+        tooltip: Specify the timeout to use during steady state check process
+        visible: ${{skipSteadyState == true}}
+  layout: 
+    - connector
+    - region
+    - cluster
+    - task_def_mode
+    - task_def
+    - task_def_arn
+    - title: Optional Configuration
+      items:
+        - task_request_def
+        - skip_steady_state
+        - steady_state_timeout
+        - log_level
+  id: ecsRunTaskStep
+  name: ECS Run Task Step
+  description: Executes an ECS task
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: run-task
+  step:
+    group:
+      steps:
+        - name: RunTask
+          id: runtask
+          run:
+            container:
+              image: harnessdev/ecs-run-task:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_CLUSTER: ${{inputs.cluster}}
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_TASK_REQUEST_DEFINITION: ${{inputs.task_request_def}}
+              PLUGIN_TASK_DEFINITION: ${{inputs.task_def}}
+              PLUGIN_TASK_DEFINITION_ARN: ${{inputs.task_def_arn}}
+              PLUGIN_STEADY_STATE_CHECK: ${{inputs.skip_steady_state}}
+              PLUGIN_STEADY_STATE_CHECK_TIMEOUT: ${{inputs.steady_state_timeout}}

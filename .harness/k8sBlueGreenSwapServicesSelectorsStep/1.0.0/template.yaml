@@ -1,0 +1,95 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    stable_service:
+      type: string
+      label: Stable Service
+      required: true
+      ui:
+        tooltip: Enter the stable service name
+        placeholder: stable service
+    stage_service:
+      type: string
+      label: Stage Service
+      required: true
+      ui:
+        tooltip: Enter the stage service name
+        placeholder: stage service
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+    work_dir:
+      type: string
+      label: Working Directory
+      ui:
+        tooltip: Enter the working directory for swap services selectors
+        placeholder: /path/to/dir
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+    is_openshift:
+      type: boolean
+      label: OpenShift Mode
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to mark if this is OpenShift deployment
+  layout:
+    - stable_service
+    - stage_service
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - release
+        - work_dir
+        - log_level
+        - is_openshift
+  id: k8sBlueGreenSwapServicesSelectorsStep
+  name: Kubernetes Blue Green Swap Services Selectors
+  description: Swaps services to route production traffic to the new version of the application and stage traffic to the old version
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    name: Kubernetes Blue Green Swap Services Selectors
+    id: k8sBlueGreenSwapServicesSelectorsStep
+    run:
+      container:
+        image: harnessdev/k8s-swap-services-selectors:0.0.1
+        connector: account.harnessImage
+      env:
+        PLUGIN_STABLE_SERVICE: ${{inputs.stable_service}}
+        PLUGIN_STAGE_SERVICE: ${{inputs.stage_service}}
+        PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+        PLUGIN_NAMESPACE: ${{inputs.namespace}}
+        PLUGIN_RELEASE_NAME: ${{inputs.release}}
+        PLUGIN_WORK_DIR: ${{inputs.work_dir}}
+        HARNESS_IS_OPENSHIFT: ${{inputs.is_openshift}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}

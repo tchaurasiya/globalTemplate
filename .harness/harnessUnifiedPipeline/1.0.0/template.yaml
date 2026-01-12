@@ -1,0 +1,38 @@
+template:
+  pipeline:
+    type: object
+    stages:
+      - clone:
+          type: object
+          ref:
+            type: object
+            fields:
+              name:
+                type: string
+                component: string
+                autofocus: false
+              type:
+                type: string
+                component: string
+                autofocus: false
+              sha:
+                type: string
+                component: string
+                autofocus: false
+          trace:
+            type: boolean
+            component: boolean
+            autofocus: false
+          depth:
+            type: number
+            component: number
+            autofocus: false
+        environment:
+          id:
+            type: string
+          deploy-to:
+            type: string
+        steps:
+          type: object
+
+

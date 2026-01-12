@@ -1,0 +1,113 @@
+template:
+  inputs:
+    host:
+      type: string
+      label: Host
+      required: true
+      ui:
+        tooltip: Specify the target Windows host/IP address to connect to.
+    script:
+      type: string
+      label: Script
+      required: true
+      ui:
+        tooltip: Enter the PowerShell script content to execute on the remote host.
+    port:
+      type: integer
+      label: Port
+      default: 5985
+      ui:
+        tooltip: Specify the port number to connect to (default 5985).
+    work_dir:
+      type: string
+      label: Working Directory
+      default: <+unified.workspace>
+      ui:
+        tooltip: Specify the remote directory where the script will be executed.
+    use_ssl:
+      type: boolean
+      label: Use SSL
+      ui:
+        tooltip: Enable SSL to connect to the remote host.
+    use_skip_cert_check:
+      type: boolean
+      label: Use Skip Cert Check
+      ui:
+        tooltip: Enable skip certificate check to connect to the remote host.
+    env_vars:
+      type: key-value-pairs
+      label: Environment Variables
+      ui:
+        tooltip: Specify environment variables to pass to the plugin.
+    out_vars:
+      type: key-value-pairs
+      label: Output Variables
+      ui:
+        tooltip: Specify output variables to capture from the remote host.
+    secret_out_vars:
+      type: key-value-pairs
+      label: Secret Output Variables
+      ui:
+        tooltip: Specify secret output variables to capture from the remote host.
+    script_timeout:
+      type: string
+      label: Script Timeout
+      default: 30m
+      ui:
+        tooltip: Specify the script execution timeout.
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - debug
+        - info
+        - warn
+        - error
+      ui:
+        component: select
+        tooltip: Set the log level for Winrm step execution
+  layout:
+    - host
+    - script
+    - title: Optional Configuration
+      items:
+        - port
+        - workdir
+        - env_vars
+        - out_vars
+        - secret_out_vars
+        - script_timeout
+        - use_ssl
+        - use_skip_cert_check
+        - log_level
+
+  id: winrm
+  name: WinRM
+  description: Execute a powershell script on a remote host using WinRM.
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: winrm
+  step:
+    group:
+      steps:
+        - name: WinRM
+          id: winrm
+          run:
+            container:
+              image: harnessdev/winrm:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HOST: ${{inputs.host}}
+              PLUGIN_SCRIPT: ${{inputs.script}}
+              PLUGIN_PORT: ${{inputs.port}}
+              PLUGIN_WORKDIR: ${{inputs.work_dir}}
+              PLUGIN_ENVS: ${{inputs.env_vars}}
+              PLUGIN_OUT_VARS: ${{inputs.out_vars}}
+              PLUGIN_SECRET_OUT_VARS: ${{inputs.secret_out_vars}}
+              PLUGIN_SCRIPT_TIMEOUT: ${{inputs.script_timeout}}
+              PLUGIN_USE_SSL: ${{inputs.use_ssl}}
+              PLUGIN_USE_SKIP_CERT_CHECK: ${{inputs.use_skip_cert_check}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}

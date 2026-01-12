@@ -8,7 +8,7 @@ template:
       oneof:
         - Aws
       ui:
-        tooltip: The Harness AWS Connector for the AWS account where you want perform ECS Bluegreen deployment
+        tooltip: Select the Harness AWS Connector for the AWS account where you want to perform ECS Bluegreen deployment
         placeholder: Select AWS Connector
     cluster:
       type: string
@@ -17,7 +17,7 @@ template:
       default: ${{infra.cluster}}
       ui:
         component: string
-        tooltip: The AWS cluster
+        tooltip: Enter the AWS cluster name where the ECS service is deployed
     region:
       type: string
       label: Region
@@ -26,7 +26,7 @@ template:
       ui:
         component: string
         placeholder: us-east-1
-        tooltip: The AWS region
+        tooltip: Enter the AWS region where the ECS cluster is located
     deploy_log_level:
       type: string
       label: Log level for deploy
@@ -39,7 +39,7 @@ template:
         - trace
       ui:
         component: select
-        tooltip: Set the log level for the deploy step
+        tooltip: Select the log level for the deploy step.
     task_def_mode:
       type: string
       label: Task definition
@@ -57,7 +57,7 @@ template:
       default: ${{service.manifests.taskDefinition.paths}}
       ui:
         component: string
-        tooltip: Path to the file containing task definition
+        tooltip: Enter the path to the file containing task definition
         placeholder: /path/to/file
         visible: ${{taskDefMode == 'Task Definition'}}
     task_def_arn:
@@ -67,7 +67,7 @@ template:
       default: ${{service.taskArn}}
       ui:
         component: string
-        tooltip: ARN value of task definition
+        tooltip: Enter the ARN value of the task definition
         placeholder: Enter task definition ARN
         visible: ${{taskDefMode == 'Task Definition ARN'}}
     service_def:
@@ -77,7 +77,7 @@ template:
       default: ${{service.manifests.serviceDefinition.paths}}
       ui:
         component: string
-        tooltip: Path to the file containing service definition
+        tooltip: Enter the path to the file containing service definition
         placeholder: /path/to/file
     scalable_targets:
       type: array
@@ -87,7 +87,7 @@ template:
         component: array
         input:
           inputType: text
-        tooltip: Path to the file(s) containing scalable target definition
+        tooltip: Enter the path to the file(s) containing scalable target definition
         placeholder: /path/to/file
     scaling_policies:
       type: array
@@ -97,7 +97,7 @@ template:
         component: array
         input:
           inputType: text
-        tooltip: Path to the file(s) containing scaling policies definition
+        tooltip: Enter the path to the file(s) containing scaling policies definition
         placeholder: /path/to/file
     target_group_arn_key:
       type: string
@@ -105,14 +105,14 @@ template:
       default: <+targetGroupArn>
       ui:
         component: string
-        tooltip: Placeholder for target group ARN value
+        tooltip: Specify the placeholder for target group ARN value
     remove_autoscaling_blue_svc:
       type: boolean
       label: Enable Auto Scaling In Swap Step
       default: false
       ui:
         component: boolean-card-select
-        tooltip: Remove autoscaling config from blue service
+        tooltip: Enable this option to remove autoscaling configuration from the blue service
         visible: ${{trafficShift == false}}
     update_green_svc:
       type: boolean
@@ -120,27 +120,27 @@ template:
       default: false
       ui:
         component: boolean-card-select
-        tooltip: Update green service instead of deleting it
+        tooltip: Enable this option to update the green service instead of deleting it
     deploy_skip_steady_state:
       type: boolean
       label: Skip steady state check for deploy step
       default: false
       ui:
         component: boolean-card-select
-        tooltip: Turn on to skip steady state check for deploy step
+        tooltip: Enable this option to skip steady state check for the deploy step
     deploy_steady_state_timeout:
       type: string
       label: Steady state check command timeout for deploy step
       default: 10m
       ui:
-        tooltip: Timeout to use during steady state check process for deploy step
+        tooltip: Specify the timeout to use during steady state check process for deploy step
         visible: ${deploySkipSteadyState == false}}
     load_balancer:
       type: string
       label: Elastic Load balancer
       required: true
       ui:
-        tooltip: Elastic Load balancer
+        tooltip: Enter the name of the Elastic Load Balancer
         placeholder: Please enter load balancer name
     traffic_shift:
       type: boolean
@@ -184,9 +184,68 @@ template:
         tooltip: Select the target group where the new service version will be deployed.
         placeholder: Please enter Stage Target Group ARN
         visible: ${{trafficShift == true}}
-    swap_log_level:
+    trafficshift_config_type:
       type: string
-      label: Log level for swap
+      label: Traffic shift config type
+      default: update
+      required: true
+      options:
+        - new
+        - update
+    trafficshift_load_balancer:
+      type: string
+      label: Elastic Load balancer for traffic shift
+      required: true
+      default: ${{rollback.data.LOAD_BALANCER}}
+      ui:
+        tooltip: Enter the name of the Elastic Load Balancer for traffic shift
+        placeholder: Please enter load balancer name
+        warning: "${{values['trafficshift_config_type']=='update' && values['trafficshift_load_balancer']!='${{rollback.data.LOAD_BALANCER}}' ? 'Value for Traffic Shift Load balancer must be ${{rollback.data.LOAD_BALANCER}}' : null}}"
+    trafficshift_listener_arn:
+      type: string
+      label: Listener ARN
+      required: true
+      ui:
+        tooltip: Select the ELB listener that you want to use as the Prod Listener.
+        placeholder: Please enter ARN of listener
+        visible: ${{trafficshiftConfigType == 'new'}}
+    trafficshift_listener_rule_arn:
+      type: string
+      label: Listener rule ARN
+      ui:
+        tooltip: If you do not enter a listener rule, Harness uses the Default rule.
+        placeholder: Please enter ARN of listener rule
+        visible: ${{trafficshiftConfigType == 'new'}}
+    trafficshift_forward_config:
+      type: array
+      label: Forward configuration
+      required: true
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: textarea
+            relativePath: TargetGroupArn
+            label: Target Group Arn
+            required: true
+          - inputType: textarea
+            relativePath: Weight
+            label: Weight
+            required: true
+        tooltip: Enter the forward configuration details as a JSON string containing target group and weight pairs
+        placeholder: Please enter forward configuration json
+        visible: ${{trafficshiftConfigType == 'new'}}   
+    trafficshift_weight:
+      type: number
+      label: New ECS Weight(%)
+      required: true
+      default: 0
+      ui:
+        tooltip: Specify the weight percentage for the new (stage) target group (service version)
+        visible: ${{trafficshiftConfigType == 'update'}} 
+    trafficshift_log_level:
+      type: string
+      label: Log level for traffic shift
       default: info
       options:
         - warn
@@ -196,35 +255,13 @@ template:
         - trace
       ui:
         component: select
-        tooltip: Set the log level for the swap step
-    swap_not_downsize_old:
-      type: boolean
-      label: Do not downsize old service
-      default: false
-      ui:
-        component: boolean-card-select
-        tooltip: Use this setting to choose whether to downsize the older, previous version of the service. By default, the previous service is downsized to 0. The service is downsized, but not deleted. If the older service needs to be brought back up again, it is still available.
-    swap_downsize_delay:
+        tooltip: Select the log level for the traffic shift step.
+    trafficshift_steady_state_timeout:
       type: string
-      label: Downsize Old Service Delay
-      default: 10s
-      ui:
-        tooltip: Delay before downsizing old service
-        visible: ${{swapDoNotDownsizeOld == false}}
-    swap_skip_steady_state:
-      type: boolean
-      label: Skip steady state check for swap step
-      default: false
-      ui:
-        component: boolean-card-select
-        tooltip: Turn on to skip steady state check for swap step
-    swap_steady_state_timeout:
-      type: string
-      label: Steady state check command timeout for swap step
+      label: Steady state check command timeout for traffic shift step
       default: 10m
       ui:
-        tooltip: Timeout to use during steady state check process for swap step
-        visible: ${{swapSkipSteadyState == false}}
+        tooltip: Specify the timeout to use during steady state check process for traffic shift step
     rollback_log_level:
       type: string
       label: Log level for rollback
@@ -237,70 +274,88 @@ template:
         - trace
       ui:
         component: select
-        tooltip: Set the log level for the rollback step
+        tooltip: Select the log level for the rollback step.
     rollback_skip_steady_state:
       type: boolean
       label: Skip steady state check for deploy rollback step
       default: false
       ui:
         component: boolean-card-select
-        tooltip: Turn on to skip steady state check for deploy rollback step
+        tooltip: Enable this option to skip steady state check for deploy rollback step
     rollback_steady_state_timeout:
       type: string
       label: Steady state check command timeout for rollback step
       default: 10m
       ui:
-        tooltip: Timeout to use during steady state check process for rollback step
-        visible: ${{swapRollbackSteadyState == false}}
-  layout: 
+        tooltip: Specify the timeout to use during steady state check process for rollback step
+        visible: ${{rollbackSkipSteadyState == false}}
+    trafficshiftrollback_log_level:
+      type: string
+      label: Log level for traffic shift rollback
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for the traffic shift rollback step.
+    trafficshiftrollback_steady_state_timeout:
+      type: string
+      label: Steady state check command timeout for traffic shift rollback step
+      default: 10m
+      ui:
+        tooltip: Specify the timeout to use during steady state check process for traffic shift rollback step
+  layout:
     - connector
-    - title: Infra Configuration
-      items:
-        - region
-        - cluster
-    - title: Manifest Configuration
-      items:
-        - task_def_mode
-        - task_def
-        - task_def_arn
-        - service_def
-        - title: Optional
-          items:
-            - scalable_targets
-            - scaling_policies
-    - title: Elastic Load Balancer Configuration
-      items:
-        - load_balancer
-        - traffic_shift
-        - prod_listener_arn
-        - prod_listener_rule_arn
-        - stage_listener_arn
-        - stage_listener_rule_arn
-        - stage_target_group_arn
+    - region
+    - cluster
+    - task_def_mode
+    - task_def
+    - task_def_arn
+    - service_def
+    - load_balancer
+    - prod_listener_arn
+    - stage_listener_arn
+    - trafficshift_config_type
+    - trafficshift_load_balancer
+    - trafficshift_listener_arn
+    - trafficshift_forward_config
+    - trafficshift_weight
     - title: Optional Configuration
       items:
+        # Non-boolean fields first
+        - scalable_targets
+        - scaling_policies
+        - prod_listener_rule_arn
+        - stage_listener_rule_arn
+        - stage_target_group_arn
         - target_group_arn_key
+        - trafficshift_listener_rule_arn
+        - deploy_steady_state_timeout
+        - deploy_log_level
+        - trafficshift_steady_state_timeout
+        - trafficshift_log_level
+        - rollback_steady_state_timeout
+        - rollback_log_level
+        - trafficshiftrollback_steady_state_timeout
+        - trafficshiftrollback_log_level
+        # Boolean fields grouped together
+        - traffic_shift
         - remove_autoscaling_blue_svc
         - update_green_svc
-        - deploy_log_level
         - deploy_skip_steady_state
-        - deploy_steady_state_timeout
-        - swap_log_level
-        - swap_not_downsize_old
-        - swap_downsize_delay
-        - swap_skip_steady_state
-        - swap_steady_state_timeout
-        - rollback_log_level
         - rollback_skip_steady_state
-        - rollback_steady_state_timeout
-  id: ecsBluegreenDeployWithSwapStrategy
-  name: ECS BlueGreen Deploy With Swap Strategy
-  description: Executes an ECS BlueGreen deployment with swap of target groups
+  id: ecsBluegreenDeployWithTrafficShiftStrategy
+  name: ECS BlueGreen Deploy With Traffic Shift Strategy
+  description: Executes an ECS BlueGreen deployment with traffic shift
   version: 1
   author: harness
   module:
     - cd
-  alias: bg-deploy-with-swap
+  alias: bg-deploy-with-traffic-shift
   step:
     group:
       steps:
@@ -330,31 +385,31 @@ template:
               stage_listener_arn: ${{inputs.stage_listener_arn}}
               stage_listener_rule_arn: ${{inputs.stage_listener_rule_arn}}
               stage_target_group_arn: ${{inputs.stage_target_group_arn}}
-        - name: bluegreenswap
-          id: bluegreenswapstep
+        - name: bluegreentrafficshift
+          id: bluegreentrafficshift
           template:
-            uses: ecsBluegreenSwapTargetGroupsStep@1.0.0
+            uses: ecsBluegreenTrafficShiftStep@1.0.0
             with:
               connector: ${{inputs.connector}}
-              log_level: ${{inputs.swap_log_level}}
+              log_level: ${{inputs.trafficshift_log_level}}
               cluster: ${{inputs.cluster}}
               region: ${{inputs.region}}
-              blue_service: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.SERVICE_NAME}}
+              config_type: ${{inputs.trafficshift_config_type}}
+              load_balancer: ${{inputs.trafficshift_load_balancer}}
+              listener_arn: ${{inputs.trafficshift_listener_arn}}
+              listener_rule_arn: ${{inputs.trafficshift_listener_rule_arn}}
+              forward_config: ${{json.format(${{inputs.trafficshift_forward_config}})}}
+              stage_listener_arn: ${{rollback.data.STAGE_LISTENER_ARN}}
+              stage_listener_rule_arn: ${{rollback.data.STAGE_LISTENER_RULE_ARN}}
+              stage_target_group_arn: ${{rollback.data.STAGE_TARGET_GROUP_ARN}}
+              prod_listener_arn: ${{rollback.data.PROD_LISTENER_ARN}}
+              prod_listener_rule_arn: ${{rollback.data.PROD_LISTENER_RULE_ARN}}
+              prod_target_group_arn: ${{rollback.data.PROD_TARGET_GROUP_ARN}}
+              blue_service: ${{rollback.data.SERVICE_NAME}}
               green_service: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.GREEN_SERVICE_NAME}}
-              first_deployment: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.FIRST_DEPLOYMENT}}
-              not_downsize_old: ${{inputs.swap_not_downsize_old}}
-              downsize_delay: ${{inputs.swap_downsize_delay}}
-              scalable_targets: ${{inputs.scalable_targets}}
-              scaling_policies: ${{inputs.scaling_policies}}
-              skip_steady_state: ${{inputs.swap_skip_steady_state}}
-              steady_state_timeout: ${{inputs.swap_steady_state_timeout}}
-              load_balancer: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.LOAD_BALANCER}}
-              stage_listener_arn: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.STAGE_LISTENER_ARN}}
-              stage_listener_rule_arn: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.STAGE_LISTENER_RULE_ARN}}
-              stage_target_group_arn: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.STAGE_TARGET_GROUP_ARN}}
-              prod_listener_arn: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.PROD_LISTENER_ARN}}
-              prod_listener_rule_arn: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.PROD_LISTENER_RULE_ARN}}
-              prod_target_group_arn: ${{${{runtime.fqn}}.bluegreendeploystep.output.outputVariables.PROD_TARGET_GROUP_ARN}}
+              first_deployment: ${{rollback.data.FIRST_DEPLOYMENT}}
+              weight: ${{inputs.trafficshift_weight}}
+              steady_state_timeout: ${{inputs.trafficshift_steady_state_timeout}}
       rollback:
         - name: bluegreenrollback
           id: bluegreenrollbackstep
@@ -388,6 +443,17 @@ template:
               prod_listener_rule_arn: ${{rollback.data.PROD_LISTENER_RULE_ARN}}
               prod_target_group_arn: ${{rollback.data.PROD_TARGET_GROUP_ARN}}
               traffic_shift: ${{rollback.data.IS_TRAFFIC_SHIFT}}
+        - name: bluegreentrafficshiftrollback
+          id: bluegreentrafficshiftrollback
+          template:
+            uses: ecsBluegreenTrafficShiftRollbackStep@1.0.0
+            with:
+              connector: ${{inputs.connector}}
+              log_level: ${{inputs.trafficshiftrollback_log_level}}
+              cluster: ${{inputs.cluster}}
+              region: ${{inputs.region}}
+              traffic_shift_data: ${{rollback.data.TRAFFIC_SHIFT_DATA}}
+              steady_state_timeout: ${{inputs.trafficshiftrollback_steady_state_timeout}}
       on-failure:
         errors: all
         action: stage-rollback

@@ -1,0 +1,149 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS Connector
+      required: true
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS connector to use when restoring the cache from AWS S3.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    cachekey:
+      type: string
+      label: Key
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the key that can be used to restore this cache. You can use the checksum macro to create a key that is based on a file's checksum. For example, myApp-{ { checksum filePath1 } }.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    endpoint:
+      type: string
+      label: Endpoint URL
+      ui:
+        component: string
+        placeholder: http://minio.company.com
+        tooltip: Enter the endpoint for S3-compatible providers. Not needed for AWS.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    bucket:
+      type: string
+      label: Bucket
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the name of the S3 bucket where you want to upload the artifact.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    region:
+      type: string
+      label: Region
+      required: true
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Enter the relevant AWS region.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    archiveformat:
+      type: string
+      label: Archive Format
+      default: tar
+      items:
+        - tar
+        - gzip
+        - zstd
+      ui:
+        tooltip: Select the archive format. The default format is tar.
+        allowedValueTypes:
+          - fixed
+          - expression
+    pathstyle:
+      type: boolean
+      label: Path Style
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Select whether to use Virtual Hosted Style (http://bucket.host/key) or Path Style (http://host/bucket/key). For MinIO use Path Style (true). Default value is false.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    failIfKeyNotFound:
+      type: boolean
+      label: Fail If Key Doesn’t Exist
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable to fail the step if the key doesn't exist.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    image:
+      type: string
+      label: Image
+      default: plugins/cache
+      ui:
+        component: string
+        tooltip: Specify the container image for the step.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+  layout:
+    - connector
+    - region
+    - bucket
+    - cachekey
+    - title: Optional Configuration
+      items:
+        - endpoint
+        - archiveformat
+        - pathstyle
+        - failIfKeyNotFound
+        - image
+  id: restoreCacheFromS3
+  name: Restore Cache from S3
+  description: Restore saved files and directories between builds using AWS S3.
+  version: 1
+  author: harness
+  module:
+    - ci
+  alias: build
+  step:
+    group:
+      steps:
+        - name: restoreCacheS3
+          id: restoreCacheS3
+          run:
+            container:
+              image: ${{inputs.image}}
+            with:
+              CACHE_KEY: ${{inputs.cachekey}}
+              RESTORE: true
+              ENDPOINT: ${{inputs.endpoint}}
+              REGION: ${{inputs.region}}
+              ARCHIVE_FORMAT: ${{inputs.archiveformat}}
+              PATH_STYLE: ${{inputs.pathstyle}}
+              FAIL_RESTORE_IF_KEY_NOT_PRESENT: ${{inputs.failIfKeyNotFound}}
+              EXIT_CODE: true
+              BACKEND: s3
+              BACKEND_OPERATION_TIMEOUT: 7200000s
+              BUCKET: ${{inputs.bucket}}
+              ACCESS_KEY: ${{${{inputs.connector}}.accessKey}}
+              SECRET_KEY: ${{${{inputs.connector}}.secretKey}}
+              ASSUME_ROLE: ${{${{inputs.connector}}.assumeRole}}
+              OIDC_TOKEN_ID: ${{${{inputs.connector}}.oidcTokenId}}

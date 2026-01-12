@@ -1,0 +1,210 @@
+template:
+  inputs:
+    langServer:
+      type: boolean
+      label: Lang Server
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable language server mode.
+    force:
+      type: boolean
+      label: Force
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable force mode to return zero exit status even if issues are found.
+    recursive:
+      type: boolean
+      label: Recursive
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable recursive mode to run command in each directory recursively.
+    format:
+      type: string
+      label: Format
+      required: true
+      options:
+        - default
+        - json
+        - checkstyle
+        - junit
+        - compact
+        - sarif
+      default: default
+      ui:
+        component: select
+        tooltip: Select the output format for the lint results.
+    config:
+      type: string
+      label: Config
+      ui:
+        tooltip: Specify the config file name.
+    ignoreModule:
+      type: string
+      label: Ignore Module
+      ui:
+        tooltip: Specify the module to ignore.
+    enableRule:
+      type: array
+      label: Enable Rule
+      ui: 
+        component: array
+        input:
+          inputType: text
+          tooltip: Specify rules to enable.
+    disableRule:
+      type: array
+      label: Disable Rule
+      ui: 
+        component: array
+        input:
+          inputType: text
+          tooltip: Specify rules to disable.
+    only:
+      type: array
+      label: Only
+      ui:
+        component: array
+        input:
+          inputType: text
+          tooltip: Specify rules to run exclusively.
+    enablePlugin:
+      type: string
+      label: Enable Plugin
+      ui:
+        tooltip: Specify plugins to enable from the command line.
+    callModuleType:
+      type: string
+      label: Call Module Type
+      default: local
+      options:
+        - local
+        - all
+        - none
+      ui:
+        component: select
+        tooltip: Select the types of modules to call.
+    chdir:
+      type: string
+      label: Chdir
+      ui:
+        tooltip: Specify a different working directory to switch to before executing the command.
+    filter:
+      type: array
+      label: Filter
+      ui: 
+        component: array
+        input:
+          inputType: text
+          tooltip: Specify file names or globs to filter issues.
+    minimumFailureSeverity:
+      type: string
+      label: Minimum Failure Severity
+      options:
+        - error
+        - warning
+        - notice
+      ui:
+        component: select
+        tooltip: Select the minimum severity level for exiting with a non-zero error code.
+    color:
+      type: boolean
+      label: Color
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable colorized output
+    noColor:
+      type: boolean
+      label: No Color
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Disable colorized output
+    fix:
+      type: boolean
+      label: Fix
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Fix issues automatically
+    noParallelRunners:
+      type: boolean
+      label: No Parallel Runners
+      default: false
+      ui:
+        component: boolean-card-switch
+        tooltip: Disable per-runner parallelism
+    maxWorkers:
+      type: number
+      label: Max Workers
+      ui:
+        tooltip: Specify the maximum number of workers in recursive inspection.
+    image:
+      type: string
+      label: Plugin Image
+      default: plugins/harness_tf_lint
+      ui:
+        tooltip: Enter the plugin image to use for this step.
+  layout:
+    - title: Custom Arguments
+      items:
+        - format
+        - langServer
+        - force
+        - recursive
+        - color
+        - noColor
+        - fix
+        - noParallelRunners
+        - config
+        - ignoreModule
+        - enableRule
+        - disableRule
+        - only
+        - filter
+        - enablePlugin
+        - callModuleType
+        - chdir
+        - minimumFailureSeverity
+        - maxWorkers
+    - title: Optional Configuration
+      items:
+        - image
+  id: tfLintStep
+  name: TF Lint Step
+  description: IACM TF Lint Step
+  version: 1
+  author: harness
+  module:
+    - iacm
+  alias: iacm
+  step:
+    run:
+      container:
+        image: <+inputs.image>
+      with: 
+        # Step Inputs
+        TF_LINT_LANGSERVER: <+inputs.langServer>
+        TF_LINT_FORCE: <+inputs.force>
+        TF_LINT_RECURSIVE: <+inputs.recursive>
+        TF_LINT_FORMAT: <+inputs.format>
+        TF_LINT_CONFIG: <+inputs.config>
+        TF_LINT_IGNORE_MODULE: <+inputs.ignoreModule>
+        TF_LINT_ENABLE_RULE: <+inputs.enableRule>
+        TF_LINT_DISABLE_RULE: <+inputs.disableRule>
+        TF_LINT_ONLY: <+inputs.only>
+        TF_LINT_ENABLE_PLUGIN: <+inputs.enablePlugin>
+        TF_LINT_CALL_MODULE_TYPE: <+inputs.callModuleType>
+        TF_LINT_CHDIR: <+inputs.chdir>
+        TF_LINT_FILTER: <+inputs.filter>
+        TF_LINT_MINIMUM_FAILURE_SEVERITY: <+inputs.minimumFailureSeverity>
+        TF_LINT_COLOR: <+inputs.color>
+        TF_LINT_NO_COLOR: <+inputs.noColor>
+        TF_LINT_FIX: <+inputs.fix>
+        TF_LINT_NO_PARALLEL_RUNNERS: <+inputs.noParallelRunners>
+        TF_LINT_MAX_WORKERS: <+inputs.maxWorkers>
+        # Root Dir
+        ROOT_DIR: <+iacmOutput.rootDir>

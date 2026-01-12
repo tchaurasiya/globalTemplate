@@ -1,0 +1,190 @@
+template:
+  inputs:
+    url:
+      type: string
+      label: URL
+      required: true
+      ui:
+        tooltip: Specify the URL to make the HTTP request to.
+    method:
+      type: select
+      label: HTTP Method
+      default: GET
+      required: true
+      options:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - HEAD
+        - OPTIONS
+        - TRACE
+        - CONNECT
+      ui:
+        tooltip: Select the HTTP method to use for the request.
+        placeholder: GET
+    headers:
+      type: string
+      label: HTTP Headers
+      ui:
+        component: textarea
+        tooltip: Enter HTTP headers as a JSON object (e.g., {"Content-Type":"application/json","Authorization":"Bearer token"}).
+        placeholder: '{"Content-Type":"application/json","Authorization":"Bearer token"}'
+    body:
+      type: string
+      label: Request Body
+      ui:
+        component: textarea
+        tooltip: Enter the request body content (for POST, PUT, PATCH methods).
+        placeholder: '{"name":"John","age":30}'
+    body_file:
+      type: string
+      label: Request Body File
+      ui:
+        tooltip: Specify the path to the file containing the request body (relative to workdir).
+        placeholder: enter valid body path here
+    work_dir:
+      type: string
+      label: Working Directory
+      default: ${{runtime.workspace}}
+      ui:
+        tooltip: Specify the working directory for file-based operations.
+        placeholder: enter working directory here
+    assertion:
+      type: string
+      label: Response Assertion
+      ui:
+        component: textarea
+        tooltip: Enter a CEL expression to validate the HTTP response (e.g., response.code == 200).
+        placeholder: response.code == 200
+    output_vars:
+      type: string
+      label: Output Variables
+      ui:
+        component: textarea
+        tooltip: Enter a JSON object mapping variable names to CEL expressions (e.g., {"user_id":"response.body.id"}).
+        placeholder: enter output variables here
+    env_vars:
+      type: string
+      label: Environment Variables
+      ui:
+        component: key-value-pairs
+        tooltip: Enter a JSON object of environment variables to use in the request.
+        placeholder: '{"VAR_NAME":"value"}'
+    client_cert:
+      type: string
+      label: Client Certificate
+      ui:
+        component: secret-input
+        tooltip: Enter the client certificate for mTLS authentication (file path or certificate content).
+        placeholder: /path/to/client.crt or certificate content
+    client_key:
+      type: string
+      label: Client Certificate Key
+      ui:
+        component: secret-input
+        tooltip: Enter the private key for the client certificate (file path or key content).
+        placeholder: /path/to/client.key or key content
+    skip_verify:
+      type: boolean
+      label: Skip SSL Verification
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable to skip SSL/TLS certificate verification (use for self-signed certificates).
+    proxy:
+      type: string
+      label: Proxy URL
+      ui:
+        tooltip: Specify the HTTP/HTTPS proxy URL to use for the request.
+        placeholder: http://proxy.example.com:8080
+    disable_redirect:
+      type: boolean
+      label: Disable Redirect Following
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable to disable automatic following of HTTP redirects.
+    log_level:
+      type: select
+      label: Log Level
+      default: debug
+      options:
+        - debug
+        - info
+        - warn
+        - error
+        - trace
+      ui:
+        tooltip: Set the log level for the HTTP step execution
+    output_file:
+      type: string
+      label: Output File
+      default: ${{runtime.workspace}}/output.out
+      ui:
+        tooltip: Specify the path to the output file where results will be written.
+  layout:
+    - url
+    - method
+    - title: Optional Configuration
+      items:
+        - title: Basic Options
+          items:
+            - headers
+            - body
+            - body_file
+        - title: Request Options
+          items:
+            - work_dir
+            - proxy
+            - disable_redirect
+        - title: Response Processing
+          items:
+            - assertion
+            - output_vars
+            - env_vars
+            - output_file
+        - title: SSL/TLS Configuration
+          items:
+            - client_cert
+            - client_key
+            - skip_verify
+        - log_level
+    
+  id: httpStep
+  name: HTTP Step
+  description: Execute HTTP requests with support for all methods, custom headers, mTLS authentication, response validation using CEL expressions, and output variable extraction. Supports proxy configuration, SSL/TLS certificates, and automatic JSON parsing.
+  version: 2
+  author: harness
+  module:
+    - cd
+    - custom
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: HTTP Request
+          id: httpStep
+          run:
+            container:
+              image: harness/harness-http-plugin:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_URL: ${{inputs.url}}
+              PLUGIN_METHOD: ${{inputs.method}}
+              PLUGIN_HEADERS: ${{inputs.headers}}
+              PLUGIN_BODY: ${{inputs.body}}
+              PLUGIN_BODY_FILE: ${{inputs.body_file}}
+              PLUGIN_WORKDIR: ${{inputs.workdir}}
+              PLUGIN_ASSERTION: ${{inputs.assertion}}
+              PLUGIN_TIMEOUT: ${{inputs.timeout}}
+              PLUGIN_OUTPUT_VARS: ${{inputs.output_vars}}
+              PLUGIN_ENV_VARS: ${{inputs.env_vars}}
+              PLUGIN_CLIENT_CERT: ${{inputs.client_cert}}
+              PLUGIN_CLIENT_KEY: ${{inputs.client_key}}
+              PLUGIN_SKIP_VERIFY: ${{inputs.skip_verify}}
+              PLUGIN_PROXY: ${{inputs.proxy}}
+              PLUGIN_DISABLE_REDIRECT: ${{inputs.disable_redirect}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              DRONE_OUTPUT: ${{inputs.output_file}}

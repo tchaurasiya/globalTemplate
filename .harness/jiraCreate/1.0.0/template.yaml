@@ -1,0 +1,79 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: Jira Connector
+      required: true
+      oneof:
+        - Jira
+      ui:
+        tooltip: The Harness Jira Connector for authentication
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    project:
+      type: string
+      label: Jira Project
+      required: true
+      ui:
+        component: string
+        tooltip: The Jira project key or ID where the issue will be created
+        placeholder: PROJ
+    issue_type:
+      type: string
+      label: Issue Type
+      required: true
+      ui:
+        component: string
+        tooltip: The type of issue to create (e.g., Story, Bug, Task)
+        placeholder: Story
+    fields:
+      type: list
+      label: Fields
+      ui:
+        component: key-value-pairs
+        tooltip: Specify the fields to set on the issue
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+  layout:
+    - connector
+    - project
+    - issue_type
+    - title: Optional Configuration
+      items:
+        - fields
+        - log_level
+  id: JiraCreateStep
+  name: Jira Create Issue Step
+  description: Create a new issue in Jira
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: create
+  step:
+    group:
+      steps:
+        - name: Jira Create Issue
+          id: jiraCreate
+          run:
+            container:
+              image: harnessdev/jira-create:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_PROJECT: ${{inputs.project}}
+              PLUGIN_ISSUE_TYPE: ${{inputs.issue_type}}
+              PLUGIN_FIELDS: ${{inputs.fields}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}

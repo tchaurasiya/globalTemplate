@@ -1,0 +1,221 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+        placeholder: namespace
+    workload:
+      type: string
+      label: Workload
+      required: true
+      ui:
+        tooltip: Enter the workload in format [ns/kind/name].
+        placeholder: ns/kind/name
+    strategy:
+      type: string
+      label: Merge Strategy Type
+      default: merge
+      options:
+        - merge
+        - strategic
+        - json
+      ui:
+        component: select
+        tooltip: Select the merge strategy type
+    files:
+      type: array
+      label: Patch File Paths
+      ui:
+        component: array
+        input: 
+          inputType: text
+        tooltip: Enter a list of patch file paths
+        placeholder: path/patch
+    content:
+      type: string
+      label: Patch Content
+      ui:
+        component: textarea
+        tooltip: Enter the patch content
+        placeholder: patch content
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the release name. If specified, plugin output will include the latest release number from the release history.
+        placeholder: release
+    service_id:
+      type: string
+      label: Service ID
+      default: ${{service.identifier}}
+      ui:
+        tooltip: Enter the service ID for release
+    environment_id:
+      type: string
+      label: Environment ID
+      default: ${{env.identifier}}
+      ui:
+        tooltip: Enter the environment ID for release
+    infra_id:
+      type: string
+      label: Infrastructure ID
+      default: ${{infra.identifier}}
+      ui:
+        tooltip: Enter the infrastructure ID for release
+    infra_key:
+      type: string
+      label: Infrastructure Key
+      default: ${{infra.infrastructureKey}}
+      ui:
+        tooltip: Enter the infrastructure key for release
+    flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Patch
+                  value: Patch
+                - label: Describe
+                  value: Describe
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    patch_timeout:
+      type: string
+      label: Patch command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during patch command execution
+    skip_steady_state_check:
+      type: boolean
+      label: Skip Steady State Check
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Skip the steady state check
+    describe_resources:
+      type: boolean
+      label: Describe Resources
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to describe resources in the steady state check
+        visible: ${{skipSteadyStateCheck == false}}
+    steady_state_timeout:
+      type: string
+      label: Steady State command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during steady state command execution
+        visible: ${{skipSteadyStateCheck == false}}
+    is_openshift:
+      type: boolean
+      label: OpenShift Mode
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to mark if this is OpenShift deployment
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+  layout:
+    - workload
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - strategy
+        - files
+        - flags
+        - content
+        - release
+        - service_id
+        - environment_id
+        - infra_id
+        - infra_key
+        - patch_timeout
+        - steady_state_timeout
+        - log_level
+        - skip_steady_state_check
+        - describe_resources
+        - is_openshift
+  id: k8sPatchStep
+  name: Kubernetes Patch
+  description: Patches the workload
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Kubernetes Patch
+          id: k8sPatchStep
+          run:
+            container:
+              image: harnessdev/k8s-patch:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+              PLUGIN_NAMESPACE: ${{inputs.namespace}}
+              PLUGIN_WORKLOAD: ${{inputs.workload}}
+              PLUGIN_MERGE_STRATEGY: ${{inputs.strategy}}
+              PLUGIN_FILES: ${{inputs.files}}
+              PLUGIN_CONTENT: ${{inputs.content}}
+              PLUGIN_FLAGS_JSON: ${{json.format(${{inputs.flags}})}}
+              PLUGIN_RELEASE_NAME: ${{inputs.release}}
+              PLUGIN_SERVICE_ID: ${{inputs.service_id}}
+              PLUGIN_ENVIRONMENT_ID: ${{inputs.environment_id}}
+              PLUGIN_INFRA_ID: ${{inputs.infra_id}}
+              PLUGIN_INFRA_KEY: ${{inputs.infra_key}}
+              PLUGIN_TIMEOUT: ${{inputs.patch_timeout}}
+              HARNESS_IS_OPENSHIFT: ${{inputs.is_openshift}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+        - if: ${{inputs.skip_steady_state_check == false}}
+          name: K8s Steady State Check Step
+          id: k8sPatchSteadyStateCheckStep
+          template:
+            uses: k8sSteadyStateCheckStep@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              release: ${{inputs.release}}
+              service_id: ${{inputs.service_id}}
+              environment_id: ${{inputs.environment_id}}
+              infra_id: ${{inputs.infra_id}}
+              infra_key: ${{inputs.infra_key}}
+              flags: ${{inputs.flags}}
+              describe_resources: ${{inputs.describe_resources}}
+              namespace: ${{inputs.namespace}}
+              release_number: ${{${{runtime.fqn}}.k8sPatchStep.output.outputVariables.PLUGIN_RELEASE_NUMBER}}
+              managed_workloads: ${{${{runtime.fqn}}.k8sPatchStep.output.outputVariables.PLUGIN_MANAGED_WORKLOADS}}
+              timeout: ${{inputs.steady_state_timeout}}

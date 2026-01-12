@@ -1,0 +1,118 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+    release_number:
+      type: number
+      label: Release Number
+      default: 0
+      ui:
+        component: number
+        tooltip: Enter the release number for tracking
+    force_rollback:
+      type: boolean
+      label: Force Rollback
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Force rollback even if there are validation errors
+    pruning:
+      type: boolean
+      label: Enable Kubernetes Pruning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Remove any resources that were present in an old manifest, but no longer present in the manifest used for the current deployment.
+    flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Apply
+                  value: Apply
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+    timeout:
+      type: string
+      label: Apply command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during apply command execution
+  layout:
+    - title: Optional Configuration
+      items:
+        # Non-boolean fields first
+        - kubeconfig
+        - namespace
+        - release
+        - release_number
+        - flags
+        - timeout
+        - log_level
+        # Boolean fields grouped together
+        - force_rollback
+        - pruning
+  id: k8sRollingRollbackAction
+  name: Kubernetes Rolling Rollback Action
+  description: Rollback the rolling release to the previous version
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    name: Kubernetes Rolling Rollback Action
+    id: k8sRollingRollbackAction
+    run:
+      container:
+        image: harnessdev/k8s-rollback:0.0.1
+        connector: account.harnessImage
+      env:
+        PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+        PLUGIN_NAMESPACE: ${{inputs.namespace}}
+        PLUGIN_RELEASE_NAME: ${{inputs.release}}
+        PLUGIN_ROLLBACK_RELEASE_NUMBER: ${{inputs.release_number}}
+        PLUGIN_FORCE_ROLLBACK: ${{inputs.force_rollback}}
+        PLUGIN_PRUNING: ${{inputs.pruning}}
+        PLUGIN_FLAGS_JSON: ${{json.format(${{inputs.flags}})}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+        PLUGIN_TIMEOUT: ${{inputs.timeout}}

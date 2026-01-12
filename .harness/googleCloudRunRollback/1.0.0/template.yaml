@@ -1,0 +1,52 @@
+template:
+  inputs:
+    cmd_timeout:
+      type: string
+      label: Command Timeout
+      default: 10m
+      ui:
+        component: string
+        tooltip: Specify the timeout for Google Cloud Run commands being executed
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+  layout:
+    - title: Optional Configuration
+      items:
+        - cmd_timeout
+        - log_level
+  id: GoogleCloudRunRollbackStep
+  name: Google Cloud Run Rollback Step
+  description: Rollback Google Cloud Run service
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Google Cloud Run Rollback
+          id: googleCloudRunRollback
+          run:
+            container:
+              image: harnessdev/google-cloud-run-rollback:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{infra.connector}}
+              PLUGIN_REGION: ${{infra.region}}
+              PLUGIN_PROJECT: ${{infra.project}}
+              PLUGIN_CMD_TIMEOUT: ${{inputs.cmd_timeout}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_SERVICE: ${{rollback.data.SERVICE}}
+              PLUGIN_FIRST_DEPLOYMENT: ${{rollback.data.FIRST_DEPLOYMENT}}
+              PLUGIN_REVISION_METADATA: ${{rollback.data.REVISION_METADATA}}

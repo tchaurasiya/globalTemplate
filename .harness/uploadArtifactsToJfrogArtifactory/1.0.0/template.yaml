@@ -1,0 +1,77 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: Artifactory Connector
+      required: true
+      oneof:
+        - Artifactory
+      ui:
+        tooltip: Select the Harness Artifactory Connector to use for this upload.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    target:
+      type: string
+      label: Target
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the repository name relative to the server URL in the connector. If pom.xml is not present then target should be full path to artifacts folder (groupId/artifactId/version).
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    source:
+      type: string
+      label: Source Path
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the path to the artifact file/folder to upload.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    image:
+      type: string
+      label: Image
+      default: plugins/artifactory
+      ui:
+        component: string
+        tooltip: Specify the container image for the step.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+  layout:
+    - connector
+    - target
+    - source
+    - title: Optional Configuration
+      items:
+        - image
+  id: uploadArtifactsToJfrogArtifactory
+  name: Upload Artifacts to JFrog Artifactory
+  description: The Upload Artifacts to JFrog Artifactory step creates a Docker image from a Dockerfile and pushes it to a JFrog Artifactory Docker repository.
+  version: 1
+  author: harness
+  module:
+    - ci
+  alias: build
+  step:
+    group:
+      steps:
+        - name: jfrogArtifactory
+          id: jfrogArtifactory
+          run:
+            container:
+              image: ${{inputs.image}}
+            with:
+              TARGET: ${{inputs.target}}
+              SOURCE: ${{inputs.source}}
+              USERNAME: ${{${{inputs.connector}}.username}}
+              PASSWORD: ${{${{inputs.connector}}.password}}
+              FLAT: true
+              URL: ${{${{inputs.connector}}.url}}

@@ -1,0 +1,240 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS Connector
+      required: true
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS Connector to use to connect to ECR. The AWS IAM roles and policies associated with the account used in the Harness AWS Connector must be able to push to ECR.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    dockerfile:
+      type: string
+      label: Dockerfile
+      ui:
+        component: string
+        tooltip: Specify the Dockerfile name. If not provided, the Dockerfile is assumed to be in the root folder of the codebase.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    context:
+      type: string
+      label: Context
+      ui:
+        component: string
+        tooltip: Enter a path to a directory containing files that make up the build's context. When the pipeline runs, the build process can refer to any files found in the context. For example, a Dockerfile can use a COPY instruction to reference a file in the context.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    target:
+      type: string
+      label: Target
+      ui:
+        component: string
+        tooltip: Specify the Docker target build stage as defined inside the Dockerfile.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    tags:
+      type: array
+      label: Tags
+      required: true
+      ui:
+        component: array
+        input:
+          inputType: text
+        tooltip: Specify one or more tags for the Docker image.
+        allowedValueTypes:
+          - fixed
+          - expression
+    buildargs:
+      type: key-value-pairs
+      label: Build Arguments
+      ui:
+        tooltip: Specify the Docker build-time variables (--build-arg).
+        allowedValueTypes:
+          - fixed
+          - runtime
+    repo:
+      type: string
+      label: Image Name
+      required: true
+      ui:
+        component: string
+        tooltip: Provide the image name followed by the tag or digest in the format [image_name]:[tag] or [image_name]@sha256:[digest]. The registry URL will be automatically picked up from the associated connector. If a tag or digest is not provided, the image will default to the latest tag.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    labels:
+      type: key-value-pairs
+      label: Labels
+      ui:
+        tooltip: Specify labels to add metadata to the Docker image.
+        allowedValueTypes:
+          - fixed
+          - runtime
+    registry:
+      type: string
+      label: Registry
+      required: true
+      ui:
+        component: string
+        placeholder: 1234567890.dkr.ecr.us-east-1.amazonaws.com
+        tooltip: Enter the ECR Registry. Format <account_id>.dkr.ecr.<region>.amazonaws.com
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    region:
+      type: string
+      label: Region
+      required: true
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Enter the relevant AWS region.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    cachefrom:
+      type: string
+      ui:
+        component: ghost
+    cacheto:
+      type: string
+      ui:
+        component: ghost
+    cacherepo:
+      type: string
+      label: Remote Cache Image
+      ui:
+        component: string
+        tooltip: Enable remote Docker layer caching. Enter the name of the remote cache image, such as LOCATION-docker.pkg.dev/PROJECT_ID/REPO_NAME/IMAGE_NAME or gcr.io/PROJECT_ID/IMAGE_NAME. The remote cache repository needs to be created in the same host and project as the build image.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    caching:
+      type: boolean
+      label: Enable Docker Layer caching
+      default: true
+      required: true
+      ui:
+        component: boolean-card-switch
+        tooltip: Enable or disable Docker Layer Caching.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    baseimageconnector:
+      type: connector
+      label: Base Image Connector
+      oneof:
+        - DockerRegistry
+      ui:
+        tooltip: Select an authenticated connector to download base images from a Docker-compliant container registry. If you don't select a Base Image Connector, the step downloads base images without authentication. Specifying a Base Image Connector is recommended because unauthenticated downloads generally have a lower rate limit than authenticated downloads. Works only with docker connectors.
+        allowedValueTypes:
+          - fixed
+          - runtime
+    envvars:
+      type: key-value-pairs
+      label: Environment Variables
+  layout:
+    - connector
+    - region
+    - registry
+    - repo
+    - tags
+    - caching
+    - title: Optional Configuration
+      items:
+        - baseimageconnector
+        - envvars
+        - dockerfile
+        - context
+        - labels
+        - buildargs
+        - target
+        - cacherepo
+  id: buildAndPushToECR
+  name: Build and push to ECR
+  description: Build a Docker image and push it to AWS Elastic Container Registry (ECR). Supported on Linux only
+  version: 1
+  author: Harness
+  module:
+    - ci
+  alias: build
+  step:
+    group:
+      steps:
+        - if: <+size(<+inputs.caching>) != 0> && <+inputs.caching == true>
+          name: pushWithBuildx
+          id: pushWithBuildx
+          run:
+            container:
+              image: plugins/buildx-ecr
+            with:
+              REGISTRY: ${{inputs.registry}}
+              REPO: ${{inputs.repo}}
+              TAGS: ${{inputs.tags}}
+              DOCKERFILE: ${{inputs.dockerfile}}
+              CONTEXT: ${{inputs.context}}
+              TARGET: ${{inputs.target}}
+              BUILD_ARGS: ${{inputs.buildargs}}
+              CUSTOM_LABELS: ${{inputs.labels}}
+              BASE_IMAGE_REGISTRY: ${{${{inputs.baseimageconnector}}.url}}
+              BASE_IMAGE_USERNAME: ${{${{inputs.baseimageconnector}}.username}}
+              BASE_IMAGE_PASSWORD: ${{${{inputs.baseimageconnector}}.password}}
+              CACHE_TO: ${{inputs.cacheto}}
+              METADATA_FILE: buildx-metadata.json
+              BUILDER_DRIVER_OPTS: image=harness/buildkit:1.0.6
+              CACHE_METRICS_FILE: buildx-cache-metrics.json
+              SNAPSHOT_MODE: redo
+              ENABLE_CACHE: true
+              CACHE_REPO: ${{inputs.cacherepo}}
+              ARTIFACT_FILE: /addon/tmp/.plugin/artifact
+              DAEMON_OFF: true
+              CACHE_FROM: ${{inputs.cachefrom}}
+              ACCESS_KEY: ${{${{inputs.connector}}.accessKey}}
+              SECRET_KEY: ${{${{inputs.connector}}.secretKey}}
+              REGION: ${{inputs.region}}
+        - if: <+size(<+inputs.caching>) == 0> || <+inputs.caching == false>
+          name: pushWithoutBuildx
+          id: pushWithoutBuildx
+          run:
+            container:
+              image: plugins/ecr
+            with:
+              REGISTRY: ${{inputs.registry}}
+              REPO: ${{inputs.repo}}
+              TAGS: ${{inputs.tags}}
+              DOCKERFILE: ${{inputs.dockerfile}}
+              CONTEXT: ${{inputs.context}}
+              TARGET: ${{inputs.target}}
+              BUILD_ARGS: ${{inputs.buildargs}}
+              CUSTOM_LABELS: ${{inputs.labels}}
+              BASE_IMAGE_REGISTRY: ${{${{inputs.baseimageconnector}}.url}}
+              BASE_IMAGE_USERNAME: ${{${{inputs.baseimageconnector}}.username}}
+              BASE_IMAGE_PASSWORD: ${{${{inputs.baseimageconnector}}.password}}
+              CACHE_TO: ${{inputs.cacheto}}
+              METADATA_FILE: buildx-metadata.json
+              BUILDER_DRIVER_OPTS: image=harness/buildkit:1.0.6
+              CACHE_METRICS_FILE: buildx-cache-metrics.json
+              SNAPSHOT_MODE: redo
+              ENABLE_CACHE: true
+              CACHE_REPO: ${{inputs.cacherepo}}
+              ARTIFACT_FILE: /addon/tmp/.plugin/artifact
+              DAEMON_OFF: true
+              CACHE_FROM: ${{inputs.cachefrom}}
+              ACCESS_KEY: ${{${{inputs.connector}}.accessKey}}
+              SECRET_KEY: ${{${{inputs.connector}}.secretKey}}
+              REGION: ${{inputs.region}}

@@ -1,0 +1,159 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file.
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+    release_number:
+      type: number
+      label: Release Number
+      default: 0
+      ui:
+        component: number
+        tooltip: Enter the release number for tracking
+    force_rollback:
+      type: boolean
+      label: Force Rollback
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Force rollback even if there are validation errors
+    pruning:
+      type: boolean
+      label: Enable Kubernetes Pruning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Remove any resources that were present in an old manifest, but no longer present in the manifest used for the current deployment.
+    flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Apply
+                  value: Apply
+                - label: Describe
+                  value: Describe
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    steady_state_timeout:
+      type: string
+      label: Steady state command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during steady state command execution
+        visible: ${{skipSteadyStateCheck == false}}
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Select the log level for this step
+    skip_steady_state_check:
+      type: boolean
+      label: Skip Steady State Check
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Skip the steady state check
+    describe_resources:
+      type: boolean
+      label: Describe Resources
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Flag to describe resources in the steady state check
+        visible: ${{skipSteadyStateCheck == false}}
+    apply_timeout:
+      type: string
+      label: Apply command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during apply command execution
+  layout:
+    - title: Optional Configuration
+      items:
+        - kubeconfig
+        - namespace
+        - release
+        - release_number
+        - flags
+        - apply_timeout
+        - steady_state_timeout
+        - log_level
+        - force_rollback
+        - pruning
+        - skip_steady_state_check
+        - describe_resources
+  id: k8sRollingRollbackStep
+  name: Kubernetes Rolling Rollback Step
+  description: Rollback the rolling release to the previous version and performs steady state check on resources
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Kubernetes Rolling Rollback Action
+          id: k8sRollingRollbackAction
+          template:
+            uses: k8sRollingRollbackAction@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              namespace: ${{inputs.namespace}}
+              release: ${{inputs.release}}
+              release_number: ${{inputs.release_number}}
+              force_rollback: ${{inputs.force_rollback}}
+              pruning: ${{inputs.pruning}}
+              flags: ${{inputs.flags}}
+              log_level: ${{inputs.log_level}}
+              timeout: ${{inputs.apply_timeout}}
+        - if: ${{inputs.skip_steady_state_check == false && ${{${{runtime.fqn}}.k8sRollingRollbackAction.output.outputVariables.ROLLBACK_SKIPPED}} == false}}
+          name: Kubernetes Steady State Check Action
+          id: k8sSteadyStateCheckAction
+          template:
+            uses: k8sSteadyStateCheckAction@1.0.0
+            with:
+              kubeconfig: ${{inputs.kubeconfig}}
+              release: ${{inputs.release}}
+              release_number: ${{${{runtime.fqn}}.k8sRollingRollbackAction.output.outputVariables.PLUGIN_RELEASE_NUMBER}}
+              namespace: ${{inputs.namespace}}
+              describe_resources: ${{inputs.describe_resources}}
+              managed_workloads: ${{${{runtime.fqn}}.k8sRollingRollbackAction.output.outputVariables.PLUGIN_RECREATED_RESOURCES}}
+              existing_pods: ${{${{runtime.fqn}}.k8sRollingRollbackAction.output.outputVariables.PLUGIN_EXISTING_PODS}}
+              timeout: ${{inputs.steady_state_timeout}}
+              flags: ${{inputs.flags}}
+              is_openshift: ${{${{runtime.fqn}}.k8sRollingRollbackAction.output.outputVariables.HARNESS_IS_OPENSHIFT}}

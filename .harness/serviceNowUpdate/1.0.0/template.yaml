@@ -1,0 +1,139 @@
+template:
+  inputs:
+    # ServiceNow Connector
+    connector:
+      type: connector
+      label: ServiceNow connector
+      required: true
+      oneof:
+        - ServiceNow
+      ui:
+        tooltip: Select the ServiceNow connector for authentication
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    # ServiceNow Ticket
+    ticket_type:
+      type: string
+      label: Ticket type
+      required: true
+      ui:
+        tooltip: Type of ServiceNow ticket to update
+        placeholder: Enter ticket type
+    ticket_number:
+      type: string
+      label: Ticket number
+      ui:
+        tooltip: The number of the ticket to update
+        placeholder: Enter ticket number
+    update_multiple:
+      type: boolean
+      label: Update multiple
+      default: false
+      ui:
+        tooltip: Enable to update multiple tickets matching the criteria
+        visible: ${{ticketType == "change_task" || ticketType == "Change Task"}}
+    change_request_number:
+      type: string
+      label: Change request number
+      ui:
+        tooltip: The number of the change request to update
+        placeholder: Enter Change Request Number
+        visible: ${{updateMultiple == true}}
+    change_task_type:
+      type: select
+      label: Change task type
+      default: ""
+      options:
+        - Planning
+        - Implementation
+        - Testing
+        - Review
+      ui:
+        tooltip: Type of change task to update
+        placeholder: Enter Change Task Type
+        visible: ${{updateMultiple == true}}
+    update_ticket_option:
+      type: select
+      label: Update ticket
+      default: Fields
+      options:
+        - Fields
+        - Template
+    fields:
+      type: list
+      label: Update fields
+      ui:
+        layout: grid
+        visible: ${{updateTicketOption == "Fields"}}
+        tooltip: Specify the fields to update on the ServiceNow ticket
+        inputs:
+          - inputType: text
+            label: Key
+            relativePath: key
+            placeholder: Enter Key
+          - inputType: text
+            label: Value
+            relativePath: value
+            placeholder: Enter Value
+    template:
+      type: string
+      label: Apply template
+      ui:
+        tooltip: Name of the template to use for ticket update
+        placeholder: Enter Template Name
+        visible: ${{updateTicketOption == "Template"}}
+    log_level:
+      type: string
+      label: Log level
+      default: error
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the plugin.
+
+  layout:
+    - connector
+    - ticket_type
+    - ticket_number
+    - update_multiple
+    - change_request_number
+    - change_task_type
+    - update_ticket_option
+    - fields
+    - template
+    - log_level
+  id: servicenow_update
+  name: ServiceNow Update Ticket
+  description: Update an existing ticket in ServiceNow
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Update
+          id: update
+          run:
+            container:
+              image: harnessdev/servicenow-update:0.0.1
+              connector: account.harnessImage
+            env:
+              # ServiceNow Connector inputs
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              # ServiceNow Ticket inputs
+              PLUGIN_TICKET_TYPE: ${{inputs.ticket_type}}
+              PLUGIN_TICKET_NUMBER: ${{inputs.ticket_number}}
+              PLUGIN_FIELDS: ${{inputs.fields}}
+              PLUGIN_TEMPLATE: ${{inputs.template}}
+              PLUGIN_CHANGE_REQUEST_NUMBER: ${{inputs.change_request_number}}
+              PLUGIN_CHANGE_TASK_TYPE: ${{inputs.change_task_type}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}

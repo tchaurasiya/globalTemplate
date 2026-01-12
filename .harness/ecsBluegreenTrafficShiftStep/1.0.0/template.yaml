@@ -1,0 +1,226 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS Connector for the AWS account where you want to perform ECS Bluegreen deployment
+        placeholder: Select AWS Connector
+    cluster:
+      type: string
+      label: Cluster
+      required: true
+      default: ${{infra.cluster}}
+      ui:
+        component: string
+        tooltip: Enter the AWS cluster name where the ECS service is deployed
+    region:
+      type: string
+      label: Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Enter the AWS region where the ECS cluster is located
+    log_level:
+      type: string
+      label: Log level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the step
+    config_type:
+      type: string
+      label: Traffic shift config type
+      default: update
+      required: true
+      options:
+        - new
+        - update
+    load_balancer:
+      type: string
+      label: Elastic Load balancer
+      required: true
+      ui:
+        tooltip: Enter the name of the Elastic Load Balancer to use for traffic shifting
+        placeholder: Please enter load balancer name
+    listener_arn:
+      type: string
+      label: Listener ARN
+      required: true
+      ui:
+        tooltip: Select the ELB listener that you want to use as the Prod Listener.
+        placeholder: Please enter ARN of listener
+        visible: ${{configType == 'new'}}
+    listener_rule_arn:
+      type: string
+      label: Listener rule ARN
+      ui:
+        tooltip: If you do not enter a listener rule, Harness uses the Default rule.
+        placeholder: Please enter ARN of listener rule
+        visible: ${{configType == 'new'}}
+    forward_config:
+      type: string
+      label: Forward configuration
+      required: true
+      ui:
+        tooltip: Enter the forward configuration details as a JSON string containing target group and weight pairs
+        placeholder: Please enter forward configuration json
+        visible: ${{configType == 'new'}}
+    steady_state_timeout:
+      type: string
+      label: Steady state check command timeout
+      default: 10m
+      ui:
+        tooltip: Specify the timeout to use during steady state check process
+    prod_listener_arn:
+      type: string
+      label: Prod listener
+      required: true
+      ui:
+        tooltip: Select the ELB listener that you want to use as the Prod Listener.
+        placeholder: Please enter ARN of Prod listener
+        visible: ${{configType == 'update'}}
+    prod_listener_rule_arn:
+      type: string
+      label: Prod listener rule ARN
+      ui:
+        tooltip: If you do not enter a listener rule, Harness uses the Default rule.
+        placeholder: Please enter ARN of Prod listener rule
+        visible: ${{configType == 'update'}}
+    prod_target_group_arn:
+      type: string
+      label: Prod listener target group
+      required: true
+      ui:
+        tooltip: Enter the target group for prod deployment
+        placeholder: Please enter ARN of Prod listener target group
+        visible: ${{configType == 'update'}}
+    stage_listener_arn:
+      type: string
+      label: Stage listener
+      required: true
+      ui:
+        tooltip: Select the ELB listener that you want to use as the Stage Listener.
+        placeholder: Please enter ARN of Stage listener
+        visible: ${{configType == 'update'}}
+    stage_listener_rule_arn:
+      type: string
+      label: Stage listener rule ARN
+      ui:
+        tooltip: If you do not enter a listener rule, Harness uses the Default rule.
+        placeholder: Please enter ARN of Stage listener rule
+        visible: ${{configType == 'update'}}
+    stage_target_group_arn:
+      type: string
+      label: Stage listener target group
+      required: true
+      ui:
+        tooltip: Enter the target group for stage deployment
+        placeholder: Please enter ARN of Stage listener target group
+        visible: ${{configType == 'update'}}
+    blue_service:
+      type: string
+      label: Blue (old) service name
+      ui:
+        tooltip: Enter the name of the blue (old) service
+        placeholder: Please enter blue (old) service name
+        visible: ${{configType == 'update'}}
+    green_service:
+      type: string
+      label: Green (new) service name
+      required: true
+      ui:
+        tooltip: Enter the name of the green (new) service
+        placeholder: Please enter green (new) service name
+        visible: ${{configType == 'update'}}
+    first_deployment:
+      type: boolean
+      label: Is first deployment
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Is this currently a first deployment?
+        visible: ${{configType == 'update'}}
+    weight:
+      type: number
+      label: New ECS Weight(%)
+      required: true
+      default: 0
+      ui:
+        tooltip: Specify the weight percentage for the new (stage) target group (service version)
+        visible: ${{configType == 'update'}}
+  layout:
+    - connector
+    - region
+    - cluster
+    - load_balancer
+    - config_type
+    - listener_arn
+    - forward_config
+    - prod_listener_arn
+    - prod_target_group_arn
+    - stage_listener_arn
+    - stage_target_group_arn
+    - green_service
+    - weight
+    - title: Optional Configuration
+      items:
+        - listener_rule_arn
+        - prod_listener_rule_arn
+        - stage_listener_rule_arn
+        - blue_service
+        - first_deployment
+        - steady_state_timeout
+        - log_level
+  id: ecsBluegreenTrafficShiftStep
+  name: ECS BlueGreen Traffic Shift Step
+  description: Executes an ECS BlueGreen traffic shift
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: bg-traffic-shift
+  step:
+    group:
+      steps:
+        - name: bluegreentrafficshift
+          id: bluegreentrafficshift
+          run:
+            container:
+              image: harnessdev/ecs-bluegreen-traffic-shift:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_CLUSTER: ${{inputs.cluster}}
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_CONFIG: ${{inputs.config_type}}
+              PLUGIN_LOAD_BALANCER: ${{inputs.load_balancer}}
+              PLUGIN_LISTENER_ARN: ${{inputs.listener_arn}}
+              PLUGIN_LISTENER_RULE_ARN: ${{inputs.listener_rule_arn}}
+              PLUGIN_FORWARD_CONFIG: ${{inputs.forward_config}}
+              PLUGIN_ROLLBACK_DATA: ${{rollback.data}}
+              PLUGIN_PROD_LISTENER_ARN: ${{inputs.prod_listener_arn}}
+              PLUGIN_PROD_LISTENER_RULE_ARN: ${{inputs.prod_listener_rule_arn}}
+              PLUGIN_PROD_TARGET_GROUP_ARN: ${{inputs.prod_target_group_arn}}
+              PLUGIN_STAGE_LISTENER_ARN: ${{inputs.stage_listener_arn}}
+              PLUGIN_STAGE_LISTENER_RULE_ARN: ${{inputs.stage_listener_rule_arn}}
+              PLUGIN_STAGE_TARGET_GROUP_ARN: ${{inputs.stage_target_group_arn}}
+              PLUGIN_TRAFFIC_SHIFT: true
+              PLUGIN_BLUE_SERVICE: ${{inputs.blue_service}}
+              PLUGIN_GREEN_SERVICE: ${{inputs.green_service}}
+              PLUGIN_FIRST_DEPLOYMENT: ${{inputs.first_deployment}}
+              PLUGIN_WEIGHT: ${{inputs.weight}}
+              PLUGIN_STEADY_STATE_CHECK_TIMEOUT: ${{inputs.steady_state_timeout}}

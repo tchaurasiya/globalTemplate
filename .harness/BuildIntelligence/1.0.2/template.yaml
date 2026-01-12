@@ -1,0 +1,19 @@
+template:
+  id: BuildIntelligence
+  name: BuildIntelligence
+  version: 1
+  description: With Build Intelligence, Harness automatically caches build outputs to improve build time. Currently supported on Cloud and Kubernetes build infrastructure.
+  author: harness
+  module:
+    - ci
+  alias: build
+  step:
+    name: set up build intelligence
+    background:
+      script: |-
+        /usr/bin/auto-injection || true
+        docker run --network drone --network-alias harnesscache -p 8082:8082 --name harnesscache -e HARNESS_ACCOUNT_ID="$HARNESS_ACCOUNT_ID" -e HARNESS_CACHE_SERVER_BEARER_TOKEN="$HARNESS_CACHE_SERVER_BEARER_TOKEN" -e HARNESS_CACHE_SERVER_URL="$HARNESS_CACHE_SERVER_URL" harness/harness-cache-server
+      env:
+        HARNESS_GRADLE_PLUGIN_VERSION: "0.0.4"
+        HARNESS_CACHE_PUSH: true
+        HARNESS_CACHE_LOCAL_ENABLED: false

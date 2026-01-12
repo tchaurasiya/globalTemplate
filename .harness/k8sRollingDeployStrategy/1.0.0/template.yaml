@@ -1,0 +1,267 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    manifests:
+      type: array
+      label: Manifest Path
+      default: ${{runtime.manifestPath}}
+      ui:
+        component: array
+        input: 
+          inputType: text
+        tooltip: Enter a list of manifest file paths
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+    service_id:
+      type: string
+      label: Service ID
+      default: ${{service.identifier}}
+      ui:
+        tooltip: Enter the service ID for release
+    environment_id:
+      type: string
+      label: Environment ID
+      default: ${{env.identifier}}
+      ui:
+        tooltip: Enter the environment ID for release
+    infra_id:
+      type: string
+      label: Infrastructure ID
+      default: ${{infra.identifier}}
+      ui:
+        tooltip: Enter the infrastructure ID for release
+    infra_key:
+      type: string
+      label: Infrastructure Key
+      default: ${{infra.infrastructureKey}}
+      ui:
+        tooltip: Enter the infrastructure key for release
+    skip_resource_versioning:
+      type: boolean
+      label: Skip Resource Versioning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip resource versioning
+    skip_adding_track_selector:
+      type: boolean
+      label: Skip Adding Track Selector
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip adding track selector to deployments
+
+    skip_dry_run:
+      type: boolean
+      label: Skip Dry Run
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip the dry run and apply changes directly to the cluster
+    deploy_pruning:
+      type: boolean
+      label: Kubernetes Pruning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Remove any resources that were present in an old manifest, but no longer present in the manifest used for the current deployment
+
+    print_manifests:
+      type: boolean
+      label: Print Manifests
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to print the manifests that will be applied
+    server_side_apply:
+      type: boolean
+      label: Server Side Apply
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to use server-side apply instead of client-side apply
+    encrypt_yaml_output:
+      type: boolean
+      label: Encrypt YAML Output
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to encrypt the output YAML file
+    deploy_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Apply
+                  value: Apply
+                - label: Describe
+                  value: Describe
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    apply_timeout:
+      type: string
+      label: Apply command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during apply command execution
+    deploy_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the rolling step
+    
+    skip_steady_state_check:
+      type: boolean
+      label: Skip Steady State Check
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip the steady state check
+    describe_resources:
+      type: boolean
+      label: Describe Resources
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to describe resources during the steady state check
+        visible: ${{skipSteadyStateCheck == false}}
+    steady_state_timeout:
+      type: string
+      label: Steady state command timeout
+      default: 5m
+      ui:
+        tooltip: Enter the timeout to use during steady state command execution
+        visible: ${{skipSteadyStateCheck == false}}
+    rollback_pruning:
+      type: boolean
+      label: Delete Resources
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Remove any resources that were present in an old manifest, but no longer present in the manifest used for the current deployment
+    rollback_flags:
+      type: array
+      label: Command Flags
+      ui:
+        component: list
+        layout: grid
+        inputs:
+          - inputType: select
+            relativePath: commandType
+            label: Command Type
+            inputConfig:
+              options:
+                - label: Apply
+                  value: Apply
+                - label: Describe
+                  value: Describe
+          - inputType: textarea
+            relativePath: flag
+            label: Flag
+            ui:
+              placeholder: --warnings-as-errors
+    rollback_log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the rollback step
+  layout:
+    - kubeconfig
+    - namespace
+    - manifests
+    - title: Release Configuration
+      items:
+        - release
+        - service_id
+        - environment_id
+        - infra_id
+        - infra_key
+    - title: Execution
+      items:
+        - title: K8s Rolling Deploy
+          items:
+            - deploy_pruning
+            - deploy_flags
+            - skip_dry_run
+            - print_manifests
+            - server_side_apply
+            - encrypt_yaml_output
+            - apply_timeout
+            - skip_steady_state_check
+            - describe_resources
+            - steady_state_timeout
+            - title: Optional Configuration
+              items:
+                - skip_resource_versioning
+                - skip_adding_track_selector
+                - deploy_log_level
+    - title: Rollback
+      items:
+        - title: K8s Rolling Rollback
+          items:
+            - rollback_pruning
+            - rollback_flags
+            - rollback_log_level
+  id: k8sRollingDeployStrategy
+  name: K8s Rolling Deploy Strategy
+  description: Harness managed Rolling kubernetes deployment with rollback
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  stages:
+    - steps:
+        - name: Kubernetes Rolling Deploy Step
+          id: k8sRollingDeployStep
+          template:
+            uses: k8sRollingDeployStep@1.0.0
+      rollback:
+        - name: Kubernetes Rolling Rollback Step
+          id: k8sRollingRollbackStep
+          template:
+            uses: k8sRollingRollbackStep@1.0.0
+      on-failure:
+        errors: all
+        action: stage-rollback

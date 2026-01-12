@@ -1,0 +1,63 @@
+template:
+  version: 1
+  inputs:
+    connector:
+      type: connector
+    branch:
+      type: string
+    tag:
+      type: string
+    repoUrl:
+      type: string
+    pr:
+      type: string
+    cloneDirectory:
+      type: string
+    debug:
+      type: boolean
+    fetchTags:
+      type: boolean
+    sparseCheckout:
+      type: string
+    commitSha:
+      type: string
+    preFetch:
+      type: string
+    depth: type string
+    prMergeStrategy:
+      type: string
+    copyFileContent:
+      type: string
+    submoduleStrategy:
+      type: string
+    filePathsContent:
+      type: string
+  step:
+     run:
+        container:
+          image: harness/drone-git
+        env:
+          DRONE_NETRC_MACHINE: <+inputs.connector.domain>
+          DRONE_NETRC_USERNAME: <+inputs.connector.username>
+          DRONE_NETRC_PASSWORD: <+inputs.connector.token>
+          DRONE_REPO_SCM: <+inputs.connector.scm>
+          DRONE_REMOTE_URL: <+inputs.repoUrl>
+          DRONE_NETRC_LFS_ENABLED: <+inputs.lfsEnabled>
+          DRONE_COMMIT_BRANCH: <+inputs.branch>
+          DRONE_TAG: <+inputs.tag>
+          DRONE_SSH_KEY: <+inputs.connector.sshKey>
+          DRONE_COMMIT_SHA: <+inputs.commitSha>
+          DRONE_WORKSPACE: <+inputs.cloneDirectory>
+          DRONE_NETRC_PORT: <+inputs.connector.port>
+          DRONE_NETRC_DEBUG: <+inputs.debug>
+          HARNESS_GIT_PROXY: <+inputs.proxy>
+          HARNESS_HTTPS_PROXY: <+runtime.proxy>
+          DRONE_NETRC_FETCH_TAGS: <+inputs.fetchTags>
+          DRONE_NETRC_SPARSE_CHECKOUT: <+inputs.sparseCheckout>
+          DRONE_NETRC_PRE_FETCH: <+inputs.preFetch>
+          DRONE_PR_MERGE_STRATEGY_BRANCH: <+inputs.prMergeStrategy>
+          DRONE_NETRC_SUBMODULE_STRATEGY: <+inputs.submoduleStrategy>
+        with:
+          DEPTH: <+inputs.depth>
+          ONLY_COPY_FILE_CONTENT: <+inputs.copyFileContent>
+          OUTPUT_FILE_PATHS_CONTENT: <+inputs.filePathsContent>

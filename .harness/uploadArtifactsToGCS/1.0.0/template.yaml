@@ -1,0 +1,74 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: GCP Connector
+      required: true
+      oneof:
+        - Gcp
+      ui:
+        tooltip: Select the Harness GCP Connector for the GCP account where you want to upload the artifact.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    target:
+      type: string
+      label: Target
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the source GCS bucket name and path in bucket.
+        placeholder: <bucket>/<path/in/bucket>
+        allowedValueTypes:
+          - fixed
+          - runtime
+    source:
+      type: string
+      label: Source Path
+      required: true
+      ui:
+        component: string
+        tooltip: Enter the path to the artifact file/folder to upload.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    image:
+      type: string
+      label: Image
+      default: plugins/gcs
+      ui:
+        component: string
+        tooltip: Specify the container image for the step.
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+  layout:
+    - connector
+    - source
+    - target
+    - title: Optional Configuration
+      items:
+        - image
+  id: uploadArtifactsToGCS
+  name: Upload Artifacts to GCS
+  version: 1
+  description: Upload artifacts to Google Cloud Storage (GCS).
+  author: harness
+  module:
+    - ci
+  alias: build
+  step:
+    group:
+      steps:
+        - id: gcsUpload
+          name: gcsUpload
+          run:
+            container:
+              image: ${{inputs.image}}
+            with:
+              TARGET: ${{inputs.target}}
+              SOURCE: ${{inputs.source}}
+              JSON_KEY: ${{${{inputs.connector}}.jsonKey}}

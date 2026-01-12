@@ -1,0 +1,89 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: AWS connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Aws
+      ui:
+        tooltip: Select the Harness AWS Connector for the AWS account where you want to perform ECS Bluegreen deployment
+        placeholder: Select AWS Connector
+    cluster:
+      type: string
+      label: Cluster
+      required: true
+      default: ${{infra.cluster}}
+      ui:
+        component: string
+        tooltip: Enter the AWS cluster name where the ECS service is deployed
+    region:
+      type: string
+      label: Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        placeholder: us-east-1
+        tooltip: Enter the AWS region where the ECS cluster is located
+    log_level:
+      type: string
+      label: Log level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the step
+    traffic_shift_data:
+      type: string
+      label: Traffic shift rollback data
+      required: true
+      default: ${{rollback.data.TRAFFIC_SHIFT_DATA}}
+      ui:
+        tooltip: Enter the traffic shift rollback data as a JSON string
+        placeholder: Please enter traffic shift rollback data json
+    steady_state_timeout:
+      type: string
+      label: Steady state check command timeout
+      default: 10m
+      ui:
+        tooltip: Specify the timeout to use during steady state check process
+  layout:
+    - connector
+    - region
+    - cluster
+    - traffic_shift_data
+    - title: Optional Configuration
+      items:
+        - steady_state_timeout
+        - log_level
+  id: ecsBluegreenTrafficShiftRollbackStep
+  name: ECS BlueGreen Traffic Shift Rollback Step
+  description: Executes an ECS BlueGreen traffic shift rollback
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: bg-traffic-shift-rollback
+  step:
+    group:
+      steps:
+        - name: bluegreentrafficshiftrollback
+          id: bluegreentrafficshiftrollback
+          run:
+            container:
+              image: harnessdev/ecs-bluegreen-traffic-shift-rollback:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_CLUSTER: ${{inputs.cluster}}
+              PLUGIN_REGION: ${{inputs.region}}
+              TRAFFIC_SHIFT_DATA: ${{inputs.traffic_shift_data}}
+              PLUGIN_STEADY_STATE_CHECK_TIMEOUT: ${{inputs.steady_state_timeout}}

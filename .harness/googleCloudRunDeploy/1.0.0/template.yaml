@@ -1,0 +1,110 @@
+template:
+  inputs:
+    connector:
+      type: connector
+      label: GCP Connector
+      required: true
+      default: ${{infra.connector}}
+      oneof:
+        - Gcp
+      ui:
+        tooltip: Select the Harness GCP Connector for the GCP account where you want to perform deployment
+        allowedValueTypes:
+          - fixed
+          - runtime
+          - expression
+    region:
+      type: string
+      label: GCP Region
+      required: true
+      default: ${{infra.region}}
+      ui:
+        component: string
+        tooltip: Enter the GCP region where you want to deploy the service
+    project:
+      type: string
+      label: GCP Project
+      required: true
+      default: ${{infra.project}}
+      ui:
+        component: string
+        tooltip: Enter the GCP project where you want to deploy the service
+    manifest:
+      type: string
+      label: Service Manifest Path
+      required: true
+      default: ${{service.manifests.gcr.paths}}
+      ui:
+        component: string
+        tooltip: Specify the path where the service manifest is located on the shared volume
+    image:
+      type: string
+      label: Service Container Image
+      default: ${{artifact.image}}
+      ui:
+        component: string
+        tooltip: Specify the container image to deploy
+    cmd_options:
+      type: string
+      label: Command Options
+      ui:
+        component: string
+        tooltip: Enter the command options to deploy the service
+        placeholder: --port=8080
+    cmd_timeout:
+      type: string
+      label: Command Timeout
+      default: 10m
+      ui:
+        component: string
+        tooltip: Specify the timeout for Google Cloud Run commands being executed
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - info
+        - warn
+        - error
+        - debug
+        - trace
+      ui:
+        component: select
+  layout:
+    - connector
+    - region
+    - project
+    - manifest
+    - title: Optional Configuration
+      items:
+        - image
+        - cmd_options
+        - cmd_timeout
+        - log_level
+  id: GoogleCloudRunDeployStep
+  name: Google Cloud Run Deploy Step
+  description: Deploy Google Cloud Run service
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    group:
+      steps:
+        - name: Google Cloud Run Deploy
+          id: googleCloudRunDeploy
+          run:
+            container:
+              image: harnessdev/google-cloud-run-deploy:0.0.1
+              connector: account.harnessImage
+            env:
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_PROJECT: ${{inputs.project}}
+              PLUGIN_CMD_TIMEOUT: ${{inputs.cmd_timeout}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_MANIFEST_PATH: ${{inputs.manifest}}
+              PLUGIN_CONTAINER_IMAGE: ${{inputs.image}}
+              PLUGIN_CMD_OPTS: ${{inputs.cmd_options}}
+              

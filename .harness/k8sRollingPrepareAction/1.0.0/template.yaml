@@ -1,0 +1,141 @@
+template:
+  inputs:
+    kubeconfig:
+      type: string
+      label: Kubeconfig Path
+      default: ${{infra.PLUGIN_HARNESS_KUBE_CONFIG_PATH}}
+      ui:
+        tooltip: Enter the path to the 'kubeconfig' file
+    namespace:
+      type: string
+      label: Namespace
+      default: ${{infra.namespace}}
+      ui:
+        tooltip: Enter the Kubernetes namespace for deployment
+    manifests:
+      type: array
+      label: Manifest Path
+      default: ${{runtime.manifestPath}}
+      ui:
+        component: array
+        input: 
+          inputType: text
+        tooltip: Enter a list of manifest file paths
+    manifest_output_path:
+      type: string
+      label: Manifest Output Path
+      ui:
+        tooltip: Enter the directory path for output of consolidated manifest
+        placeholder: path/manifest/output
+    release:
+      type: string
+      label: Release Name
+      default: ${{infra.release}}
+      ui:
+        tooltip: Enter the name for the current Harness release
+    service_id:
+      type: string
+      label: Service ID
+      default: ${{service.identifier}}
+      ui:
+        tooltip: Enter the service ID for release
+    environment_id:
+      type: string
+      label: Environment ID
+      default: ${{env.identifier}}
+      ui:
+        tooltip: Enter the environment ID for release
+    infra_id:
+      type: string
+      label: Infrastructure ID
+      default: ${{infra.identifier}}
+      ui:
+        tooltip: Enter the infrastructure ID for release
+    infra_key:
+      type: string
+      label: Infrastructure Key
+      default: ${{infra.infrastructureKey}}
+      ui:
+        tooltip: Enter the infrastructure key for release
+    skip_resource_versioning:
+      type: boolean
+      label: Skip Resource Versioning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip resource versioning
+    skip_adding_track_selector:
+      type: boolean
+      label: Skip Adding Track Selector
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Enable this option to skip adding track selector to deployments
+    pruning:
+      type: boolean
+      label: Kubernetes Pruning
+      default: false
+      ui:
+        component: boolean-card-select
+        tooltip: Remove any resources that were present in an old manifest, but no longer present in the manifest used for the current deployment
+    log_level:
+      type: string
+      label: Log Level
+      default: info
+      options:
+        - warn
+        - error
+        - info
+        - debug
+        - trace
+      ui:
+        component: select
+        tooltip: Set the log level for the rolling step
+  layout:
+    - title: Optional Configuration
+      items:
+        # Non-boolean fields first
+        - manifests
+        - kubeconfig
+        - namespace
+        - manifest_output_path
+        - release
+        - service_id
+        - environment_id
+        - infra_id
+        - infra_key
+        - log_level
+        # Boolean fields grouped together
+        - skip_resource_versioning
+        - skip_adding_track_selector
+        - pruning
+  id: k8sRollingPrepareAction
+  name: K8s Rolling Prepare Action
+  description: Prepares k8s manifest for Harness rolling deploy
+  version: 1
+  author: harness
+  module:
+    - cd
+  alias: deploy
+  step:
+    name: Kubernetes Rolling Prepare Action
+    id: k8sRollingPrepareAction
+    run:
+      container:
+        image: harnessdev/k8s-rolling:0.0.1
+        connector: account.harnessImage
+      env:
+        PLUGIN_KUBECONFIG_PATH: ${{inputs.kubeconfig}}
+        PLUGIN_NAMESPACE: ${{inputs.namespace}}
+        PLUGIN_MANIFEST_PATH: ${{inputs.manifests}}
+        PLUGIN_MANIFEST_OUTPUT_PATH: ${{inputs.manifest_output_path}}
+        PLUGIN_RELEASE_NAME: ${{inputs.release}}
+        PLUGIN_SERVICE_ID: ${{inputs.service_id}}
+        PLUGIN_ENVIRONMENT_ID: ${{inputs.environment_id}}
+        PLUGIN_INFRA_ID: ${{inputs.infra_id}}
+        PLUGIN_INFRA_KEY: ${{inputs.infra_key}}
+        PLUGIN_SKIP_RESOURCE_VERSIONING: ${{inputs.skip_resource_versioning}}
+        PLUGIN_SKIP_ADDING_TRACK_SELECTOR: ${{inputs.skip_adding_track_selector}}
+        PLUGIN_PRUNING_ENABLED: ${{inputs.pruning}}
+        PLUGIN_FF_CDS_SUPPORT_HPA_AND_PDB_NG: ${{runtime.ff.CDS_SUPPORT_HPA_AND_PDB_NG}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
