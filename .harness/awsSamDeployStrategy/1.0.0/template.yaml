@@ -17,7 +17,7 @@ template:
       ui:
         component: string
         placeholder: us-east-1
-        tooltip: Specify the AWS region for deployment
+        tooltip: Specify the AWS regions for deployment
     build_cmd_log_level:
       type: string
       label: Log Level
