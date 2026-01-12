@@ -3,7 +3,7 @@ template:
     duration:
       type: string
       label: Duration
-      default: "5"
+      default: "10"
       required: true
       ui:      
         tooltip: Verification duration in minutes (applied to both baseline and verification windows)
