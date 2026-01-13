@@ -2,4 +2,4 @@ stable: 1.0.0
 versions:
   prod1: 1.0.0
   prod0: 1.0.0
-icon-name: winrm
+icon-name: azure-functions
