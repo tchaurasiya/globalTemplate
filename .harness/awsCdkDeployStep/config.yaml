@@ -1,5 +1,5 @@
-stable: 1.0.1
+stable: 1.0.0
 versions:
-  prod1: 1.0.1
-  prod0: 1.0.1
+  prod1: 1.0.0
+  prod0: 1.0.0
 icon-name: aws-cdk
