@@ -2,7 +2,7 @@ template:
   inputs:
     tech_stack:
       type: string
-      label: Tech stack language
+      label: Tech stack language change for 1
       required: true
       default: java
       options:
