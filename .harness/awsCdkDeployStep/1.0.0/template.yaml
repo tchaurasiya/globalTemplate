@@ -2,7 +2,7 @@ template:
   inputs:
     tech_stack:
       type: string
-      label: Tech stack language change for 1 update with a fial file
+      label: Tech stack language change for 1 update with a fial file more update 3
       required: true
       default: java
       options:
@@ -12,7 +12,7 @@ template:
         - python
       ui:
         component: select
-        tooltip: Select the language of your infrastructure:hifbfh djfg:hvfjhv code repository
+        tooltip: Select the language of your infrastructure code repository
     connector:
       type: connector
       label: AWS connector
@@ -134,20 +134,20 @@ template:
       steps:
         - name: Deploy
           id: deploy
-        run:
-          container:
+          run:
+            container:
               image: harnessdev/aws-cdk:0.0.1-${{inputs.tech_stack}}
-        connector: account.harnessImage
-      env:
-        PLUGIN_ACTION: deploy
-        PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
-        PLUGIN_APP_PATH: ${{inputs.app_path}}
-        PLUGIN_WORK_DIR: ${{inputs.work_dir}}
-        PLUGIN_STACKS: ${{inputs.stacks}}
-        PLUGIN_APP_PARAMS: ${{inputs.app_params}}
-        PLUGIN_EXECUTE_BOOTSTRAP: ${{inputs.bootstrap}}
-        PLUGIN_EXECUTE_DIFF: ${{inputs.diff}}
-        PLUGIN_EXECUTE_SYNTH: ${{inputs.synth}}
-        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
-        PLUGIN_REGION: ${{inputs.region}}
-        PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              connector: account.harnessImage
+            env:
+              PLUGIN_ACTION: deploy
+              PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
+              PLUGIN_APP_PATH: ${{inputs.app_path}}
+              PLUGIN_WORK_DIR: ${{inputs.work_dir}}
+              PLUGIN_STACKS: ${{inputs.stacks}}
+              PLUGIN_APP_PARAMS: ${{inputs.app_params}}
+              PLUGIN_EXECUTE_BOOTSTRAP: ${{inputs.bootstrap}}
+              PLUGIN_EXECUTE_DIFF: ${{inputs.diff}}
+              PLUGIN_EXECUTE_SYNTH: ${{inputs.synth}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
