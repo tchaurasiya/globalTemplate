@@ -2,7 +2,7 @@ template:
   inputs:
     tech_stack:
       type: string
-      label: Tech stack language change for 1 update with a fial file more update
+      label: Tech stack language change for 1 update with a fial file more update 3
       required: true
       default: java
       options:
