@@ -120,17 +120,17 @@ template:
           run:
             container:
               image: harnessdev/aws-sam-dev:0.0.12
-           connector: account.harnessImage
+              connector: account.harnessImage
             env:
-        PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
-        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
-        PLUGIN_TIMEOUT: ${{inputs.timeout}}
-        PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
-        PLUGIN_WORK_DIR: ${{inputs.work_dir}}
-        PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
-        PLUGIN_REGISTRY_USERNAME: ${{inputs.registry_username}}
-        PLUGIN_REGISTRY_PWD: ${{inputs.registry_pwd}}
-        PLUGIN_CMD_TYPE: build
-        PLUGIN_REGION: ${{inputs.region}}
-        PLUGIN_STACK: ${{inputs.stack}}
-        PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_TIMEOUT: ${{inputs.timeout}}
+              PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
+              PLUGIN_WORK_DIR: ${{inputs.work_dir}}
+              PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
+              PLUGIN_REGISTRY_USERNAME: ${{inputs.registry_username}}
+              PLUGIN_REGISTRY_PWD: ${{inputs.registry_pwd}}
+              PLUGIN_CMD_TYPE: build
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_STACK: ${{inputs.stack}}
+              PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
