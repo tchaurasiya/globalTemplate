@@ -2,7 +2,7 @@ template:
   inputs:
     connector:
       type: connector
-      label: AWS Connector
+      label: AWS connector
       required: true
       default: ${{infra.connector}}
       oneof:
@@ -20,7 +20,7 @@ template:
         tooltip: Specify the AWS region for deployment
     log_level:
       type: string
-      label: Log Level
+      label: Log level
       default: error
       options:
         - info
@@ -73,7 +73,7 @@ template:
         tooltip: Select the Docker registry password
         placeholder: Select docker registry password
     cmd_opts:
-      type: boolean
+      type: string
       label: Command options
       default: --use-container
       ui:
@@ -90,19 +90,25 @@ template:
         component: string
         tooltip: Enter the AWS CloudFormation stack name
         placeholder: Enter stack name
-  layout:
+  layout: 
     - connector
     - region
-    - stack
     - title: Optional Configuration
       items:
-        - work_dir
-        - pre_exec_cmd
-        - timeout
-        - cmd_opts
-        - registry_url
-        - registry_username
-        - registry_pwd
+        - title: Command Options
+          items:
+            - pre_exec_cmd
+            - timeout
+            - cmd_opts
+            - title: Docker Registry Options
+              items:
+                - registry_url
+                - registry_username
+                - registry_pwd
+        - title: Manifest Options
+          items:
+            - work_dir
+        - stack
         - log_level
   id: awsSamDeployStep
   name: AWS SAM Deploy Step
@@ -119,18 +125,18 @@ template:
           id: build
           run:
             container:
-          image: harnessdev/aws-sam-dev:0.0.12
+              image: harnessdev/aws-sam-dev:0.0.12
               connector: account.harnessImage
             env:
-        PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
-        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
-        PLUGIN_TIMEOUT: ${{inputs.timeout}}
-        PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
-        PLUGIN_WORK_DIR: ${{inputs.work_dir}}
-        PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
-        PLUGIN_REGISTRY_USERNAME: ${{inputs.registry_username}}
-        PLUGIN_REGISTRY_PWD: ${{inputs.registry_pwd}}
-        PLUGIN_CMD_TYPE: build
-        PLUGIN_REGION: ${{inputs.region}}
-        PLUGIN_STACK: ${{inputs.stack}}
-        PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_TIMEOUT: ${{inputs.timeout}}
+              PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
+              PLUGIN_WORK_DIR: ${{inputs.work_dir}}
+              PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
+              PLUGIN_REGISTRY_USERNAME: ${{inputs.registry_username}}
+              PLUGIN_REGISTRY_PWD: ${{inputs.registry_pwd}}
+              PLUGIN_CMD_TYPE: build
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_STACK: ${{inputs.stack}}
+              PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
