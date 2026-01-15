@@ -12,7 +12,7 @@ template:
         - python
       ui:
         component: select
-        tooltip: Select the language of your infrastructure code repository
+        tooltip: Select the language of your infrastructure:hifbfh djfg:hvfjhv code repository
     connector:
       type: connector
       label: AWS connector
@@ -134,10 +134,10 @@ template:
       steps:
         - name: Deploy
           id: deploy
-          run:
-            container:
+        run:
+          container:
               image: harnessdev/aws-cdk:0.0.1-${{inputs.tech_stack}}
-              connector: account.harnessImage
+        connector: account.harnessImage
       env:
         PLUGIN_ACTION: deploy
         PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
