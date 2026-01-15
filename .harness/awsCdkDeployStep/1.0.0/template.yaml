@@ -138,16 +138,16 @@ template:
             container:
               image: harnessdev/aws-cdk:0.0.1-${{inputs.tech_stack}}
               connector: account.harnessImage
-            env:
-              PLUGIN_ACTION: deploy
-              PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
-              PLUGIN_APP_PATH: ${{inputs.app_path}}
-              PLUGIN_WORK_DIR: ${{inputs.work_dir}}
-              PLUGIN_STACKS: ${{inputs.stacks}}
-              PLUGIN_APP_PARAMS: ${{inputs.app_params}}
-              PLUGIN_EXECUTE_BOOTSTRAP: ${{inputs.bootstrap}}
-              PLUGIN_EXECUTE_DIFF: ${{inputs.diff}}
-              PLUGIN_EXECUTE_SYNTH: ${{inputs.synth}}
-              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
-              PLUGIN_REGION: ${{inputs.region}}
-              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+      env:
+        PLUGIN_ACTION: deploy
+        PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
+        PLUGIN_APP_PATH: ${{inputs.app_path}}
+        PLUGIN_WORK_DIR: ${{inputs.work_dir}}
+        PLUGIN_STACKS: ${{inputs.stacks}}
+        PLUGIN_APP_PARAMS: ${{inputs.app_params}}
+        PLUGIN_EXECUTE_BOOTSTRAP: ${{inputs.bootstrap}}
+        PLUGIN_EXECUTE_DIFF: ${{inputs.diff}}
+        PLUGIN_EXECUTE_SYNTH: ${{inputs.synth}}
+        PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+        PLUGIN_REGION: ${{inputs.region}}
+        PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
