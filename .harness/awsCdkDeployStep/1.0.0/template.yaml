@@ -2,7 +2,7 @@ template:
   inputs:
     tech_stack:
       type: string
-      label: Tech stack language change for 0
+      label: Tech stack language change for 1 update with a fial file
       required: true
       default: java
       options:
@@ -15,13 +15,13 @@ template:
         tooltip: Select the language of your infrastructure code repository
     connector:
       type: connector
-      label: AWS Connector
+      label: AWS connector
       required: true
       oneof:
         - Aws
       ui:
         tooltip: Select the Harness AWS connector for the AWS account where you want to perform deployment
-        placeholder: Select AWS Connector
+        placeholder: Select AWS connector
     region:
       type: string
       label: Region
@@ -32,7 +32,7 @@ template:
         tooltip: Specify the AWS region for deployment
     log_level:
       type: string
-      label: Log Level
+      label: Log level
       default: error
       options:
         - info
@@ -48,21 +48,21 @@ template:
       label: Execute bootstrap
       default: false
       ui:
-        component: boolean-card-switch
+        component: boolean-card-select
         tooltip: Enable to execute the bootstrap action
     diff:
       type: boolean
       label: Execute diff
       default: false
       ui:
-        component: boolean-card-switch
+        component: boolean-card-select
         tooltip: Enable to execute the diff action
     synth:
       type: boolean
       label: Execute synth
       default: false
       ui:
-        component: boolean-card-switch
+        component: boolean-card-select
         tooltip: Enable to execute the synth action (this will prevent the deploy action from executing)
     app_params:
       type: array
@@ -98,29 +98,29 @@ template:
         tooltip: Enter the CDK app path (this will be appended to PLUGIN_WORK_DIR)
         placeholder: Enter CDK app path (this will be appended to PLUGIN_WORK_DIR)
     cmd_opts:
-      type: boolean
+      type: string
       label: Command options
       ui:
         component: string
         input:
           inputType: text
-        tooltip: Enter additional command options:for a:b the CDK deploy command
+        tooltip: Enter additional command options for the CDK deploy command
         placeholder: Enter CDK deploy command options
-  layout: 
-    - app_path
+  layout:
+    - tech_stack
     - connector
     - region
-    - tech_stack
+    - app_path
     - title: Optional Configuration
       items:
         - cmd_opts
         - work_dir
         - stacks
         - app_params
+        - log_level
         - bootstrap
         - diff
         - synth
-        - log_level
   id: awsCdkDeployStep
   name: AWS CDK Deploy Step
   description: Creates infrastructure in AWS
@@ -137,17 +137,17 @@ template:
           run:
             container:
               image: harnessdev/aws-cdk:0.0.1-${{inputs.tech_stack}}
-      connector: account.harnessImage
+              connector: account.harnessImage
             env:
-      PLUGIN_ACTION: deploy
-      PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
-      PLUGIN_APP_PATH: ${{inputs.app_path}}
-      PLUGIN_WORK_DIR: ${{inputs.work_dir}}
-      PLUGIN_STACKS: ${{inputs.stacks}}
-      PLUGIN_APP_PARAMS: ${{inputs.app_params}}
-      PLUGIN_EXECUTE_BOOTSTRAP: ${{inputs.bootstrap}}
-      PLUGIN_EXECUTE_DIFF: ${{inputs.diff}}
-      PLUGIN_EXECUTE_SYNTH: ${{inputs.synth}}
-      PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
-      PLUGIN_REGION: ${{inputs.region}}
-      PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
+              PLUGIN_ACTION: deploy
+              PLUGIN_CMD_OPTS: ${{inputs.cmd_opts}}
+              PLUGIN_APP_PATH: ${{inputs.app_path}}
+              PLUGIN_WORK_DIR: ${{inputs.work_dir}}
+              PLUGIN_STACKS: ${{inputs.stacks}}
+              PLUGIN_APP_PARAMS: ${{inputs.app_params}}
+              PLUGIN_EXECUTE_BOOTSTRAP: ${{inputs.bootstrap}}
+              PLUGIN_EXECUTE_DIFF: ${{inputs.diff}}
+              PLUGIN_EXECUTE_SYNTH: ${{inputs.synth}}
+              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+              PLUGIN_REGION: ${{inputs.region}}
+              PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
