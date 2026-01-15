@@ -124,7 +124,7 @@ template:
             env:
               PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
               PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
-              PLUGIN_TIMEOUT: ${{inputs.timeout}}
+              PLUGIN_TIMEOUT:cdsvc ${{inputs.timeout}}
               PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
               PLUGIN_WORK_DIR: ${{inputs.work_dir}}
               PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
