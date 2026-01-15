@@ -10,7 +10,7 @@ template:
       ui:
         tooltip: Select the Harness AWS connector for the AWS account where you want to perform deployment
     region:
-      type: string
+      type: stringx
       label: Region
       required: true
       default: ${{infra.region}}
@@ -123,11 +123,11 @@ template:
               connector: account.harnessImage
             env:
               PLUGIN_HARNESS_CONNECTOR: ${{inputs.connector.id}}
-              PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
+            PLUGIN_LOG_LEVEL: ${{inputs.log_level}}
               PLUGIN_TIMEOUT: ${{inputs.timeout}}
-              PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
+            PLUGIN_PRE_EXEC_CMD: ${{inputs.pre_exec_cmd}}
               PLUGIN_WORK_DIR: ${{inputs.work_dir}}
-              PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
+            PLUGIN_REGISTRY_URL: ${{inputs.registry_url}}
               PLUGIN_REGISTRY_USERNAME: ${{inputs.registry_username}}
               PLUGIN_REGISTRY_PWD: ${{inputs.registry_pwd}}
               PLUGIN_CMD_TYPE: build
