@@ -1,0 +1,8 @@
+pipeline:
+  clone:
+    enabled: true
+  stages:
+    - steps:
+        - run:
+            script: go build
+      runtime: shell
