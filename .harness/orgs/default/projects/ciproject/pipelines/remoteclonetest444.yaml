@@ -1,0 +1,7 @@
+pipeline:
+  clone:
+    enabled: true
+  stages:
+    - steps:
+        - run:
+            script: echo hello
