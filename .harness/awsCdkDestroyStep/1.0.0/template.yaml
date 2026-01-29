@@ -3,7 +3,7 @@ template:
     tech_stack:
       type: string
       label: Tech stack language
-      required: true
+      
       default: java
       options:
         - java
@@ -16,7 +16,7 @@ template:
     connector:
       type: connector
       label: AWS Connector
-      required: true
+      
       oneof:
         - Aws
       ui:
@@ -25,7 +25,7 @@ template:
     region:
       type: string
       label: Region
-      required: true
+      
       ui:
         component: string
         placeholder: us-east-1
@@ -55,7 +55,7 @@ template:
     app_path:
       type: string
       label: App path
-      required: true
+      
       ui:
         component: string
         tooltip: Enter the CDK app path (this will be appended to PLUGIN_WORK_DIR)

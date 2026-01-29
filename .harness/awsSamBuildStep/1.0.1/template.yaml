@@ -3,7 +3,7 @@ template:
     connector:
       type: connector
       label: AWS connector
-      required: true
+      
       default: ${{infra.connector}}
       oneof:
         - Aws
@@ -12,7 +12,7 @@ template:
     region:
       type: string
       label: Region
-      required: true
+      
       default: ${{infra.region}}
       ui:
         component: string
