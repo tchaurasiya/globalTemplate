@@ -1,5 +1,19 @@
 pipeline:
   stages:
     - steps:
-        - run:
-            script: go build
+        - template:
+            uses: awsCdkDeployStep
+        - template:
+            uses: awsCdkDestroyStep
+            with:
+              connector: account.aws_ami
+              region: us-east-1
+        - template:
+            uses: remotedockerbuildpush2
+            with:
+              connector: account.aws_ami
+              region: us-east-1
+        - template:
+            uses: local_template
+        - template:
+            uses: org.local_template_org
