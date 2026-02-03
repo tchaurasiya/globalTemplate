@@ -13,5 +13,3 @@ pipeline:
             with:
               connector: account.aws_ami
               region: us-east-1
-        - template:
-            uses: local_template
