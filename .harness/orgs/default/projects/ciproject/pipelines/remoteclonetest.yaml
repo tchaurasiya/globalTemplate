@@ -15,5 +15,3 @@ pipeline:
               region: us-east-1
         - template:
             uses: local_template
-        - template:
-            uses: org.local_template_org
