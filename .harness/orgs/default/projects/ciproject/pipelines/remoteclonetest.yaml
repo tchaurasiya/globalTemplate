@@ -4,3 +4,5 @@ pipeline:
         - template:
             uses: remotedockerbuildpush2
             branch: main-patch
+        - template:
+            uses: local_template
