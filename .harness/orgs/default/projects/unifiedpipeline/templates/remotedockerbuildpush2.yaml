@@ -1,7 +1,7 @@
 template:
   id: remotedockerbuildpush
   name: remotedockerbuildpush
-  version: 1.0
+  version: 1
   inputs:
     connector:
       type: connector
@@ -19,13 +19,14 @@ template:
       type: string
     labels:
       type: string
+      value: thisisonsomeotherbranch
   step:
     group:
       steps:
         - run:
             container:
               image: alpine
-            script: "echo \"from alpine\" > testfile"
+            script: echo "from alpine" > testfile
         - run:
             container:
               image: plugins/docker
