@@ -1,0 +1,12 @@
+template:
+  name: stepv0
+  identifier: stepv0
+  versionLabel: "1"
+  type: Step
+  projectIdentifier: ciproject
+  orgIdentifier: default
+  tags: {}
+  spec:
+    type: Wait
+    spec:
+      duration: 10m
