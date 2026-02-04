@@ -32,23 +32,5 @@ template:
               image: plugins/docker
             with:
               USERNAME: <+inputs.connector.username>
-              PASSWORD: <+inputs.connector.password>
-              REGISTRY: <+inputs.connector.url>
-              DOCKERFILE: <+inputs.dockerfile>
-              CONTEXT: <+inputs.context>
-              TAGS: <+inputs.tags>
-              BUILD_ARGS: <+inputs.buildArgs>
-              TARGET: <+inputs.target>
-              REPO: <+inputs.repo>
-              CUSTOM_LABELS: <+inputs.labels>
-              BASE_IMAGE_REGISTRY: <+runtime.baseImageRegistry>
-              CACHE_TO: <+inputs.cacheTo>
-              BUILDER_DRIVER_OPTS: <+runtime.builderDriverOpts>
-              CACHE_METRICS_FILE: <+runtime.cacheMetricsFile>
-              CACHE_FROM: <+runtime.cacheFrom>
-              METADATA_FILE: <+runtime.metadataFile>
-              SNAPSHOT_MODE: <+runtime.snapshotMode>
-              ENABLE_CACHE: <+runtime.enableCache>
-              CACHE_REPO: <+runtime.cacheRepo>
-              ARTIFACT_FILE: <+runtime.artifactFile>
+
               DAEMON_OFF: true
