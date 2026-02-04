@@ -2,14 +2,4 @@ pipeline:
   stages:
     - steps:
         - template:
-            uses: awsCdkDeployStep
-        - template:
-            uses: awsCdkDestroyStep
-            with:
-              connector: account.aws_ami
-              region: us-east-1
-        - template:
             uses: remotedockerbuildpush2
-            with:
-              connector: account.aws_ami
-              region: us-east-1
